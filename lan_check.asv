@@ -1,0 +1,344 @@
+function [LAN] = lan_check(LAN,op,place)
+%               v.1.1.3
+%             <*LAN)<|   
+%
+% if op= 1 delete incorrected and no-accepted trials
+% if op is a string that can contain
+%   ~V  : no muestran ningun aviso (default: V muestra los avisos)
+%   ~D  : no borra incorrecto ni no aceptados (default)
+%    D  : borra incorrectos y aceptados
+%    A  : solo ensayos aceptado
+%    
+%
+% Pablo Billeke
+
+% 03.0
+% 7.03.2012       add version info
+% 10.01.2012      add gruop
+% 27.11.2011      add op for options
+% 25.11.2011      fix empty LAN
+% 16.09.2011      fix empty LAN
+% 12.07.2011      add delr
+% 18.01.2011      fix time
+% 17.01.2011      add pnts comprobation
+% 05.08.2010      fix time
+% 19.04.2010
+% 04.02.2010
+% ...
+if (nargin == 1)||(ischar(op)&&(strcmp(op,'no')))
+   ifv = 1;
+   delr = 0;
+   op='no';
+else
+   if ischar(op)
+       %%%
+       if ~isempty(strfind(op,'~V'))
+           ifv = 0;
+       else
+           ifv = 1;
+       end
+       %%%
+       if ~isempty(strfind(op,'~D'))
+           delr = 0;
+       elseif ~isempty(strfind(op,'D'))
+           delr = 1;
+       else
+           delr = 0; 
+       end
+       %%%
+   else
+       delr = op;
+       ifv = 1;
+   end
+end
+
+
+
+if iscell(LAN)
+    for lan = 1:length(LAN)
+        if ~isempty(LAN{lan})
+       
+            LAN{lan} = lan_check_struct(LAN{lan},op,lan);
+            
+   
+        end
+    end   
+elseif isstruct(LAN) || isempty(LAN)
+   place=1;
+if isempty(EEG)
+    EEG = create_lan;
+end
+
+LAN = EEG; %%%% revisar
+if ~iscell(LAN.data)
+    EEG = mat2cell_lan(EEG);
+end
+
+
+%%% accept
+if isfield(EEG,'accept') && delr
+   try
+    EEG.data = EEG.data(logical(EEG.accept));
+    if ifv,    disp('delete rejected epoch'), end
+   end
+elseif ~isfield(EEG,'accept') && iscell(EEG.data)
+    LAN.accept = true(1,length(EEG.data));
+elseif ~isfield(EEG,'accept') && isnumeric(EEG.data)
+    LAN.accept = true(1,size(EEG.data,3));   
+end
+
+
+%%% correct
+if isfield(EEG,'correct') && delr
+   try
+    EEG.data = EEG.data(logical(EEG.correct));
+     if ifv,    disp('delete incorrect epoch'); end
+   end
+elseif ~isfield(EEG,'correct') && iscell(EEG.data)
+    LAN.correct = true(1,length(EEG.data));
+elseif ~isfield(EEG,'correct') && isnumeric(EEG.data)
+    LAN.correct = true(1,size(EEG.data,3));   
+end
+
+
+%%% eventos
+LAN.srate = EEG.srate;
+LAN.data = EEG.data;
+if isfield(EEG,'event')
+LAN.event = EEG.event;
+else
+   if ifv,  display('No hay eventos'); end,
+end
+
+
+%%% TIME
+%%%
+
+%if %isfield(EEG,'time')
+   %LAN.time = EEG.time;
+%elseif 
+
+if iscell(EEG.data)  && isfield(EEG,'time')
+   if (length(EEG.data) ~= size(EEG.time,1)) && size(EEG.time,1)>1
+       LAN = rmfield(LAN,'time');
+       EEG = rmfield(EEG,'time');
+       if ifv, disp('bad asigned line of time'); end;
+   elseif (length(EEG.data) ~= size(EEG.time,1)) && size(EEG.time,1)==1
+       
+       LAN.time = repmat(EEG.time,[length(LAN.data),1]);
+       
+       EEG.time = LAN.time; %rmfield(EEG,'time');
+       
+   end
+end
+
+if isempty(EEG.data)
+    LAN.time = [];
+elseif ~iscell(EEG.data) && ~isfield(EEG,'time')   
+   LAN.time(1) = 0;
+   LAN.time(2) = length(LAN.data) ./ LAN.srate;
+   LAN.time(3) = 1;
+
+elseif iscell(EEG.data)  && ~isfield(EEG,'time')
+    b = size(EEG.data,2); 
+    for i = 1:b
+        LAN.time(i,1) = 0;
+        LAN.time(i,2) = size(LAN.data{i},2) / LAN.srate;
+        if i ==1
+            LAN.time(i,3) = 1;
+        elseif i > 1
+        LAN.time(i,3) = LAN.time(i-1,3) + length(LAN.data{1,i-1});
+        end
+    end
+elseif iscell(EEG.data)  && isfield(EEG,'time')
+    [a b] = size(EEG.data);
+    if ~isempty(EEG.data{1})
+        if size(EEG.time,1) == 1
+           for i = 1:b
+               % LAN.time(i,1) = 0;
+               if i >1
+                   LAN.time(i,1) = LAN.time(1,1);
+               end
+                LAN.time(i,2) = (length(LAN.data{1,i}) / LAN.srate ) + LAN.time(1,1);
+                if i ==1
+                    LAN.time(1,3) = 1 - (LAN.time(1,1) * LAN.srate );
+                elseif i > 1
+                LAN.time(i,3) = LAN.time(i-1,3) + length(LAN.data{1,i-1});
+                end
+            end 
+            
+            
+        else
+            for i = 1:b
+               % LAN.time(i,1) = 0;
+                LAN.time(i,2) = (length(LAN.data{1,i}) / LAN.srate ) + LAN.time(i,1);
+                if i ==1
+                    LAN.time(i,3) = 1 - (LAN.time(i,1) * LAN.srate );
+                elseif i > 1
+                LAN.time(i,3) = LAN.time(i-1,3) + length(LAN.data{1,i-1});
+                end
+            end 
+        end
+    end
+    
+end
+
+
+
+%%%% CONDITION
+%%%%
+
+if isfield(EEG,'cond')
+   LAN.cond = EEG.cond;
+else
+    LAN.cond = ['cond ' num2str(place) ];
+end
+
+if isfield(EEG,'name')
+   LAN.name = EEG.name;
+else
+    LAN.name = [ ' ' ];
+end
+
+if isfield(EEG,'group')
+   LAN.group = EEG.group;
+else
+    LAN.group = ['G' ];
+end
+
+
+%%% TRIALS
+%%%
+
+if isfield(EEG,'trials')
+   LAN.trials = EEG.trials;
+   if iscell(EEG.data)
+       [a b] = size(EEG.data);
+       if b ~= LAN.trials
+       LAN.trials = b;
+       if ifv , disp('fixed number of trials'); end,
+       end
+   elseif ~iscell(EEG.data) 
+    [a b c] = size(EEG.data);
+    LAN.trials = c;
+       if c ~= LAN.trials
+       LAN.trials = c;
+       if ifv , disp('fixed number of trials');end
+       end
+   end
+   
+elseif iscell(EEG.data)
+    [a b] = size(EEG.data);
+    LAN.trials = b;
+    
+elseif ~iscell(EEG.data) 
+    [a b c] = size(EEG.data);
+    LAN.trials = c;
+end
+%%%%
+ if size(LAN.time,1) == 1
+        for i = 1:LAN.trials
+            w(i,:) = LAN.time;
+        end
+        LAN.time = w; 
+        clear w i 
+end
+
+
+
+
+
+%%%% LAN.nbchan
+%%%%
+
+    if iscell(EEG.data)
+        nbchan = size(EEG.data{1},1);
+    else
+        nbchan = size(EEG.data,1);
+    end
+
+if isfield(EEG,'nbchan')
+   if nbchan == EEG.nbchan;
+   LAN.nbchan = EEG.nbchan;
+   else
+   LAN.nbchan = nbchan;
+   if ifv , disp(['se areglo el numero de electrodos activos a ' num2str(nbchan) ]);end
+   end
+else
+   LAN.nbchan = nbchan; 
+end
+
+
+%%%% LAN.xmax
+
+ if ~iscell(EEG.data)
+%             if isfield(EEG,'xmax') & LAN.trials > 1
+%             LAN.xmax = EEG.xmax;
+            %else
+                if LAN.trials > 1
+                LAN.xmax = (length(LAN.data) * LAN.trials)/LAN.srate;
+                else
+                LAN.xmax_c = length(LAN.data)/LAN.srate * LAN.trials;
+                LAN.xmax = LAN.xmax_c;
+                end
+            %end
+        else
+%             if isfield(EEG,'xmax') & LAN.trials > 1
+%             LAN.xmax = EEG.xmax;
+%             else
+                last_time_plan = 0;
+                for tr = 1:length(EEG.data)
+                    last_time_plan = last_time_plan + length(LAN.data{tr});
+                end
+                LAN.xmax = last_time_plan/EEG.srate;
+            %end
+  end
+
+            
+%%%% pnts
+if ~iscell(EEG.data)
+    LAN.pnts = length(EEG.data);
+else
+    for t = 1:length(LAN.data)
+    LAN.pnts(t) = length(LAN.data{t});
+    end
+    %L = max(t);                              % in case of variable durations, take into account the longest one       
+end
+%%%
+
+%%%%------------------------------------
+%---- Extras necesarios para ciertas funciones---
+%%%%------------------------------------
+
+%%%% chanlocs
+if isfield(LAN, 'chanlocs')
+    if length(LAN.chanlocs)==LAN.nbchan
+      if ~isfield(LAN.chanlocs(1),'type')  
+          for i = 1:LAN.nbchan;
+          LAN.chanlocs(i).type = 'unkwon';
+          end
+      end
+    end
+end
+%%%% tag
+if ~isfield(LAN, 'tag')
+      LAN.tag.mat = zeros(LAN.nbchan,LAN.trials);
+      LAN.tag.labels = [];
+end
+
+
+%%% info
+%if ~isfield(LAN, 'infolan')
+      LAN.infolan.version = lanversion;
+      LAN.infolan.date=date;
+      if ~isfield(LAN.infolan, 'creation_date')
+      LAN.infolan.creation_date=date;    
+      end
+%end
+else
+    error('no LAN format')
+end
+
+end
+
+

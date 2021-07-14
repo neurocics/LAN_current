@@ -1,0 +1,213 @@
+littler.o littler.o: littler.c /usr/include/getopt.h \
+  /usr/include/sys/cdefs.h /usr/include/unistd.h /usr/include/_types.h \
+  /usr/include/sys/_types.h /usr/include/machine/_types.h \
+  /usr/include/i386/_types.h /usr/include/sys/unistd.h \
+  /usr/include/sys/select.h /usr/include/sys/appleapiopts.h \
+  /usr/include/sys/_structs.h /usr/include/sys/_select.h \
+  /usr/include/stdio.h /usr/include/secure/_stdio.h \
+  /usr/include/secure/_common.h /usr/include/string.h \
+  /usr/include/secure/_string.h /usr/include/errno.h \
+  /usr/include/sys/errno.h /usr/include/stdlib.h \
+  /usr/include/Availability.h /usr/include/AvailabilityInternal.h \
+  /usr/include/sys/wait.h /usr/include/sys/signal.h \
+  /usr/include/machine/signal.h /usr/include/i386/signal.h \
+  /usr/include/i386/_structs.h /usr/include/machine/_structs.h \
+  /usr/include/mach/i386/_structs.h /usr/include/sys/resource.h \
+  /usr/include/machine/endian.h /usr/include/i386/endian.h \
+  /usr/include/sys/_endian.h /usr/include/libkern/_OSByteOrder.h \
+  /usr/include/libkern/i386/_OSByteOrder.h /usr/include/alloca.h \
+  /usr/include/machine/types.h /usr/include/i386/types.h \
+  /usr/include/i386/_types.h /usr/include/sys/types.h \
+  /usr/include/sys/stat.h config.h svnversion.h autoloads.h littler.h \
+  /Library/Frameworks/R.framework/Resources/include/R.h \
+  /usr/lib/gcc/i686-apple-darwin10/4.2.1/include/limits.h \
+  /usr/lib/gcc/i686-apple-darwin10/4.2.1/include/syslimits.h \
+  /usr/include/limits.h /usr/include/machine/limits.h \
+  /usr/include/i386/limits.h /usr/include/i386/_limits.h \
+  /usr/include/sys/syslimits.h \
+  /usr/lib/gcc/i686-apple-darwin10/4.2.1/include/float.h \
+  /usr/include/math.h /usr/include/architecture/i386/math.h \
+  /Library/Frameworks/R.framework/Resources/include/Rconfig.h \
+  /Library/Frameworks/R.framework/Resources/include/x86_64/Rconfig.h \
+  /Library/Frameworks/R.framework/Resources/include/R_ext/Arith.h \
+  /Library/Frameworks/R.framework/Resources/include/R_ext/libextern.h \
+  /Library/Frameworks/R.framework/Resources/include/R_ext/Boolean.h \
+  /Library/Frameworks/R.framework/Resources/include/R_ext/Complex.h \
+  /Library/Frameworks/R.framework/Resources/include/R_ext/Constants.h \
+  /Library/Frameworks/R.framework/Resources/include/R_ext/Error.h \
+  /Library/Frameworks/R.framework/Resources/include/R_ext/Memory.h \
+  /usr/lib/gcc/i686-apple-darwin10/4.2.1/include/stddef.h \
+  /Library/Frameworks/R.framework/Resources/include/R_ext/Print.h \
+  /usr/lib/gcc/i686-apple-darwin10/4.2.1/include/stdarg.h \
+  /Library/Frameworks/R.framework/Resources/include/R_ext/Random.h \
+  /Library/Frameworks/R.framework/Resources/include/R_ext/Utils.h \
+  /Library/Frameworks/R.framework/Resources/include/R_ext/RS.h \
+  /Library/Frameworks/R.framework/Resources/include/Rembedded.h \
+  /Library/Frameworks/R.framework/Resources/include/Rversion.h \
+  /Library/Frameworks/R.framework/Resources/include/x86_64/Rversion.h \
+  /Library/Frameworks/R.framework/Resources/include/Rdefines.h \
+  /Library/Frameworks/R.framework/Resources/include/Rinternals.h \
+  /Library/Frameworks/R.framework/Resources/include/R_ext/PrtUtil.h \
+  /Library/Frameworks/R.framework/Resources/include/Rinterface.h \
+  /Library/Frameworks/R.framework/Resources/include/R_ext/RStartup.h \
+  /Library/Frameworks/R.framework/Resources/include/R_ext/Parse.h
+
+/usr/include/getopt.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/unistd.h:
+
+/usr/include/_types.h:
+
+/usr/include/sys/_types.h:
+
+/usr/include/machine/_types.h:
+
+/usr/include/i386/_types.h:
+
+/usr/include/sys/unistd.h:
+
+/usr/include/sys/select.h:
+
+/usr/include/sys/appleapiopts.h:
+
+/usr/include/sys/_structs.h:
+
+/usr/include/sys/_select.h:
+
+/usr/include/stdio.h:
+
+/usr/include/secure/_stdio.h:
+
+/usr/include/secure/_common.h:
+
+/usr/include/string.h:
+
+/usr/include/secure/_string.h:
+
+/usr/include/errno.h:
+
+/usr/include/sys/errno.h:
+
+/usr/include/stdlib.h:
+
+/usr/include/Availability.h:
+
+/usr/include/AvailabilityInternal.h:
+
+/usr/include/sys/wait.h:
+
+/usr/include/sys/signal.h:
+
+/usr/include/machine/signal.h:
+
+/usr/include/i386/signal.h:
+
+/usr/include/i386/_structs.h:
+
+/usr/include/machine/_structs.h:
+
+/usr/include/mach/i386/_structs.h:
+
+/usr/include/sys/resource.h:
+
+/usr/include/machine/endian.h:
+
+/usr/include/i386/endian.h:
+
+/usr/include/sys/_endian.h:
+
+/usr/include/libkern/_OSByteOrder.h:
+
+/usr/include/libkern/i386/_OSByteOrder.h:
+
+/usr/include/alloca.h:
+
+/usr/include/machine/types.h:
+
+/usr/include/i386/types.h:
+
+/usr/include/i386/_types.h:
+
+/usr/include/sys/types.h:
+
+/usr/include/sys/stat.h:
+
+config.h:
+
+svnversion.h:
+
+autoloads.h:
+
+littler.h:
+
+/Library/Frameworks/R.framework/Resources/include/R.h:
+
+/usr/lib/gcc/i686-apple-darwin10/4.2.1/include/limits.h:
+
+/usr/lib/gcc/i686-apple-darwin10/4.2.1/include/syslimits.h:
+
+/usr/include/limits.h:
+
+/usr/include/machine/limits.h:
+
+/usr/include/i386/limits.h:
+
+/usr/include/i386/_limits.h:
+
+/usr/include/sys/syslimits.h:
+
+/usr/lib/gcc/i686-apple-darwin10/4.2.1/include/float.h:
+
+/usr/include/math.h:
+
+/usr/include/architecture/i386/math.h:
+
+/Library/Frameworks/R.framework/Resources/include/Rconfig.h:
+
+/Library/Frameworks/R.framework/Resources/include/x86_64/Rconfig.h:
+
+/Library/Frameworks/R.framework/Resources/include/R_ext/Arith.h:
+
+/Library/Frameworks/R.framework/Resources/include/R_ext/libextern.h:
+
+/Library/Frameworks/R.framework/Resources/include/R_ext/Boolean.h:
+
+/Library/Frameworks/R.framework/Resources/include/R_ext/Complex.h:
+
+/Library/Frameworks/R.framework/Resources/include/R_ext/Constants.h:
+
+/Library/Frameworks/R.framework/Resources/include/R_ext/Error.h:
+
+/Library/Frameworks/R.framework/Resources/include/R_ext/Memory.h:
+
+/usr/lib/gcc/i686-apple-darwin10/4.2.1/include/stddef.h:
+
+/Library/Frameworks/R.framework/Resources/include/R_ext/Print.h:
+
+/usr/lib/gcc/i686-apple-darwin10/4.2.1/include/stdarg.h:
+
+/Library/Frameworks/R.framework/Resources/include/R_ext/Random.h:
+
+/Library/Frameworks/R.framework/Resources/include/R_ext/Utils.h:
+
+/Library/Frameworks/R.framework/Resources/include/R_ext/RS.h:
+
+/Library/Frameworks/R.framework/Resources/include/Rembedded.h:
+
+/Library/Frameworks/R.framework/Resources/include/Rversion.h:
+
+/Library/Frameworks/R.framework/Resources/include/x86_64/Rversion.h:
+
+/Library/Frameworks/R.framework/Resources/include/Rdefines.h:
+
+/Library/Frameworks/R.framework/Resources/include/Rinternals.h:
+
+/Library/Frameworks/R.framework/Resources/include/R_ext/PrtUtil.h:
+
+/Library/Frameworks/R.framework/Resources/include/Rinterface.h:
+
+/Library/Frameworks/R.framework/Resources/include/R_ext/RStartup.h:
+
+/Library/Frameworks/R.framework/Resources/include/R_ext/Parse.h:

@@ -1,0 +1,127 @@
+
+1. Installation from distributed sources
+========================================
+
+1.1 Requirements
+----------------
+
+    GNU R has to be installed in a shared-library configuration. This
+    is not the default, so you may have to rebuild R.  If in doubt, look
+    for a file 'libR.so' which should be in the lib/ directory of your
+    R installtions, i.e. in
+
+	/usr/local/lib/R/libR.so
+
+    or
+
+	/usr/lib/R/libR.so
+
+    If R is not compiled with a shared library, you can rebuild from source
+	with the following miminal recipe:
+
+	# For GNU R, not littler
+	./configure --enable-R-shlib
+	make
+	make install
+
+    See the R manuals for details.
+
+    Linux and OS X are known to be supported at this point.
+    
+    In all likelihood, the requirement of shared libary precludes
+    installation of littler on Windoze.
+
+
+1.2 Basic Steps
+---------------
+
+   The minimal recipe for installation should apply, i.e. start by
+
+ 	$ ./configure
+
+   which will find the first path to R in your environment variable PATH. 
+   
+   If you want the binary to be installation with a name other than 'r' 
+   (which is a good idea on case-insensitive systems like OS X), then you 
+   can set either --program-suffix or --program-prefix as in
+
+      ./configure --program-suffix=sp			# creates rsp
+
+   and 
+
+      ./configure --program-prefix=little		# creates littler
+
+   If there's another R installation you want to use, then you'll have to 
+   readjust the PATH. For example:
+
+		$ PATH=~/R-trunk/bin:$PATH ./configure
+
+   Then
+
+	$ make
+
+   should build the 'r' binary, and 
+
+	$ sudo make install
+
+   should install it, as well as the manual page.
+
+
+2. Installation from SVN
+========================
+
+
+2.1 Requirements
+----------------
+
+    As above, but you will also need autoconf, aclocal, and of course
+    svn itself.
+
+
+2.2 SVN checkout
+----------------
+
+    Anonymous checkout is available via 
+
+	$ svn checkout http://littler.googlecode.com/svn/trunk/ littler
+
+
+2.3 Build preparation
+---------------------
+
+    You can simply run the catch-all script 'bootstrap':
+
+	$ bootstrap
+
+    which includes the steps from 1.2 above and produces a new
+    executable.
+
+    If you want to set configure options, you can do so too after an
+    initial 'bootstrap' call.
+
+
+
+3. Binary Installation
+======================
+
+3.1 Debian
+----------
+
+    Calling
+
+	$ sudo apt-get install littler
+
+    is all it takes if your sources.list file points to testing or
+    unstable.
+
+
+4. Feedback
+===========
+
+    Is encouraged ;-)
+
+    
+	- Jeffrey Horner <jeff.horner@vanderbilt.edu>
+	- Dirk Eddelbuettel <edd@debian.org> 
+
+ 

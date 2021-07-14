@@ -1,0 +1,13 @@
+ License
+Copyrights (C) 2008-2011, Donders Institute for Brain, Cognition and Behaviour, The Netherlands (DCCN, DCC, DCN)
+Copyrights (C) 2008-2009, Centre for Cognitive Neuroimaging in Glasgow, United Kingdom (CCNi)
+Copyrights (C) 2003-2008, F.C. Donders Centre, University Nijmegen, The Netherlands (FCDC)
+Copyrights (C) 2004-2007, Nijmegen Institute for Cognition and Information, The Netherlands (NICI)
+Copyrights (C) 2004-2005, Universitatsklinikum Hamburg-Eppendorf, Germany (UKE)
+Copyrights (C) 2003-2004, Center for Sensory Motor Interaction, University Aalborg, Denmark (SMI)
+Copyrights (C) 1999-2003, Department of Medical Physics, Radboud University Nijmegen, The Netherlands (MBFYS)
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
