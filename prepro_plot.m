@@ -1,6 +1,6 @@
 
 function prepro_plot(LAN)
-%         v.0.1.3
+%         v.0.2
 %
 %         GUI para realizar prepocesamiento de matrices segemnnatadas
 %             tambien sirve de visualizaci??n para datos continuos 
@@ -10,6 +10,7 @@ function prepro_plot(LAN)
 %
 %  Pablo Billeke
 %
+%  27.08.2021 (PB) improbe ICA components visualization 
 %  11.06.2020 (PB) funcion n> 
 %  21.04.2015 (PB) add ICA decomposition and componente view  
 %  14.01.2014 (PB) fix save for cell  array LAN structure
@@ -97,6 +98,9 @@ global l_seg
 global ini_p
 global fin_p
 global view_chan
+global view_comp
+view_comp =0;
+global comp_data
 global ncomp
 ncomp=1;
 global tncomp
@@ -433,7 +437,7 @@ guiplotICA = uicontrol('Parent',paCom ,'Units','normalized','Style','pushbutton'
 global electrode_comp
 
 electrode_comp  = uicontrol('Parent',paCom ,'Units','normalized','Style','pushbutton',...
-           'String', 'Show: electrodes',...opciones{pp,1},...
+           'String', 'Showing: electrodes',...opciones{pp,1},...
            'Position',[0.61,0.02,0.3,0.2],...
        ...'BackgroundColor',bc,'ForegroundColor',fc,......'BackgroundColor',cf,...'ForegroundColor',fc,...
            'Callback',{ @shift_comp_elect} );
@@ -611,6 +615,7 @@ function EEGplot(nt,Nlabels)
        bad = find(ifcellis(LAN{ncd}.tag.labels,'bad','c'));
        badA = find(ifcellis(LAN{ncd}.tag.labels,'bad:A'));
        badV = find(ifcellis(LAN{ncd}.tag.labels,'bad:V'));
+       
        if ifcon
            ini_p = fix(1 + ((n_ini-1 )* l_seg));
            fin_p = fix(ini_p + (l_seg -1));
@@ -635,6 +640,9 @@ function EEGplot(nt,Nlabels)
            else
                gr=2;
            end
+           
+           % bad channel 
+           if ~view_comp 
            if any(LAN{ncd}.tag.mat(i,cnt) == bad)
                paso = color;
                color = 'yellow';
@@ -644,17 +652,41 @@ function EEGplot(nt,Nlabels)
                    color=[1 0.5 0];
                end
            end
+           end
+           % delected componnete 
+           if view_comp 
+           if isfield(LAN{ncd}, 'ica_del')
+           if any(LAN{ncd}.ica_del == i)
+               paso = color;
+               color = 'red';
+               if isfield(LAN{ncd}, 'ica_del_comp')
+                   comp_data{nt}(i,:) = LAN{ncd}.ica_del_comp{nt}(LAN{ncd}.ica_del == i,:);
+               end
+           end
+           end
+           end
+           
+           
            %%%
            
            if ifcon    %con
-               
+               if view_comp
+                    plot(ltime,comp_data{1}(i,ini_p:fin_p)-(c*sc)-(nanmean(LAN{ncd}.data{1}(i,ini_p:fin_p))),'Color',color,...
+                   'LineWidth',gr), hold all
+               else
                plot(ltime,LAN{ncd}.data{1}(i,ini_p:fin_p)-(c*sc)-(nanmean(LAN{ncd}.data{1}(i,ini_p:fin_p))),'Color',color,...
                    'LineWidth',gr), hold all
+               end
                try  color = paso;  end
                
            else    %seg
+               if view_comp
+               plot(ltime,comp_data{nt}(i,:)-(c*sc)-(nanmean(LAN{ncd}.data{nt}(i,:))),'Color',color,...
+                   'LineWidth',gr), hold all                   
+               else
                plot(ltime,LAN{ncd}.data{nt}(i,:)-(c*sc)-(nanmean(LAN{ncd}.data{nt}(i,:))),'Color',color,...
                    'LineWidth',gr), hold all
+               end
                try  color = paso;  end
                
            end
@@ -1175,12 +1207,17 @@ end
             try close(topoICA) ; end
             topoICA = figure('Visible','on','Units','normalized',...
                'Position',p_ica,...
-               'Name','ICA calulate','NumberTitle','off','MenuBar', 'none',...
+               'Name','ICA calulated','NumberTitle','off','MenuBar', 'none',...
                'CloseRequestFcn',@close_ica...
                );
             editF
             subplot('Position',[0.01 0.1 0.4 0.7] )
-            topoplot_lan(winv(:,ncomp),LAN{ncd}.chanlocs);
+            if ~isfield(LAN{ncd}, 'ica_select');
+                LAN{ncd}.ica_select = 1:LAN{ncd}.nbchan;
+            end
+                
+                
+            topoplot_lan(winv(:,ncomp),LAN{ncd}.chanlocs(LAN{ncd}.ica_select));
             uicontrol(topoICA,'Style','pushbutton','String','<','Units','normalized',...
                       'Position',[0.05, 0.85 ,0.1,0.15],...'BackgroundColor',bc,'ForegroundColor',fc,...
                       'Callback',{@comp_c});
@@ -1202,13 +1239,14 @@ end
                   
                   
             subplot('Position',[0.5 0.2 0.4 0.4] ) 
-            if strcmp( get(electrode_comp,'String') ,'Show: electrodes')
+            %if strcmp( get(electrode_comp,'String') ,'Showing: electrodes')
                 W = LAN{ncd}.ica_weights*LAN{ncd}.ica_sphere;
-            else
-                W=eye(size(LAN{ncd}.ica_weights));
-            end
+            %else
+            %    W=eye(size(LAN{ncd}.ica_weights));
+            %end
                 for t =1:LAN{ncd}.trials
-                    D{t} = W*(LAN{ncd}.data{t} - repmat( mean(LAN{ncd}.data{t},2),[ 1 length(LAN{ncd}.data{t})])  );  
+                    D{t} = (LAN{ncd}.data{t} - repmat( mean(LAN{ncd}.data{t},2),[ 1 length(LAN{ncd}.data{t})])  ); 
+                    D{t} = W*D{t}(LAN{ncd}.ica_select,:); 
                 end
                 Tm = timelan(LAN{ncd});
                 
@@ -1219,7 +1257,12 @@ end
                 end    
                 Tm = Tm(1:min_p);
                 D = cat(3,D{LAN{ncd}.accept});
-                D = D(ncomp,:,:);
+                if isfield(LAN{ncd}, 'ica_del') && any(LAN{ncd}.ica_del==ncomp);
+                D = cat(3,LAN{ncd}.ica_del_comp{LAN{ncd}.accept});    
+                D = D(LAN{ncd}.ica_del==ncomp,1:min_p,:);
+                else
+                D = D(ncomp,:,:);    
+                end
                 pcolor2(Tm,1:size(D,3),squeeze(D)');shading flat
             subplot('Position',[0.5 0.1 0.4 0.1] ) 
                 plot(Tm,squeeze(mean(D,3)));
@@ -1246,35 +1289,43 @@ end
     op = get(b,'String');
     if iscell(op), op = op{1};,end
     switch op
-        case 'Show: electrodes'
+        case 'Showing: electrodes'
             if isfield(LAN{ncd},'ica_weights')
-                set(b,'String','Show: components')
+                set(b,'String','Showing: components')
+                view_comp=1;
                 
            W = LAN{ncd}.ica_weights*LAN{ncd}.ica_sphere;
+           
+           if ~isfield(LAN{ncd}, 'ica_select')
+               LAN{ncd}.ica_select=1:LAN{ncd}.nbchan;
+           end
+           
            view_chan = 1:size(W,1);
            for e = 1:size(W,1);
            Nlables{e} = [ 'Co' num2str(e) ];      
            end 
            
            for t =1:LAN{ncd}.trials
-               LAN{ncd}.data{t} = W*LAN{ncd}.data{t};   
+               comp_data{t} = W*LAN{ncd}.data{t}(LAN{ncd}.ica_select,:);   
            end
+           close(EEG)
            EEGplot(cnt,Nlables)
            end
             
-        case 'Show: components'
-           set(b,'String','Show: electrodes') 
-           
+        case 'Showing: components'
+           set(b,'String','Showing: electrodes') 
+               view_comp=0;
            view_chan = 1:LAN{ncd}.nbchan;
            for e = 1:LAN{ncd}.nbchan;
            Nlables{e} = [  LAN{ncd}.chanlocs(e).labels ];      
            end 
-           
-           invW = pinv(LAN{ncd}.ica_weights*LAN{ncd}.ica_sphere); 
-           
-           for t =1:LAN{ncd}.trials
-               LAN{ncd}.data{t} = (invW)*LAN{ncd}.data{t};   
-           end 
+%            
+%            invW = pinv(LAN{ncd}.ica_weights*LAN{ncd}.ica_sphere); 
+%            
+%            for t =1:LAN{ncd}.trials
+%                LAN{ncd}.data{t} = (invW)*LAN{ncd}.data{t};   
+%            end 
+           close(EEG)
            EEGplot(cnt,Nlables)
         case 'Del Components'
           if strcmp(get(electrode_comp,'String'),'components')

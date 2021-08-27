@@ -1,6 +1,6 @@
 function LAN = fftamp_thr_lan(LAN,cfg)
 %       <*LAN)<
-%       v.0.0.3
+%       v.0.1
 %       
 %       Detec amplitud variation en fourier space 
 %       cfg.thr    =    [1 0.1]           (sd %spectro)
@@ -12,6 +12,7 @@ function LAN = fftamp_thr_lan(LAN,cfg)
 % See also FOURIERP
 % Pablo Billeke
 
+% 27.08.2021 (PB) enable to perform in selected chanels 
 % 05.04.2012 (PB) fix cat option
 % 25.07.2011 (PB)
 if nargin <2
@@ -85,10 +86,18 @@ LAN = fourierp_lan(LAN,cfg);
 t1 = find(LAN.freq.fourierp.freq>=cfg.frange(1),1,'first');
 t2 = find(LAN.freq.fourierp.freq<=cfg.frange(end),1,'last');
 tt = 1:LAN.trials;
+
+if isstr(cfg.chn) &  strcmp(cfg.chn,'all')
+    elec = 1:LAN.nbchan;
+else
+    elec = cfg.chn;
+end
+
+
 %tt(LAN.accept)=[];% no evaluar trial no aceptados
 for nt = tt;
     
-    for nch = 1:LAN.nbchan
+    for nch = 1:elec
         nfl= LAN.freq.fourierp.data(nch,t1:t2,nt); %data
         nf = nfl - LAN.freq.fourierp.mean(nch,t1:t2);%data-mean
         nf = ((nf-(thr(1).*LAN.freq.fourierp.std(nch,t1:t2)))>0);
