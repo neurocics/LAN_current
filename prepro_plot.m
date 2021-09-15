@@ -615,7 +615,7 @@ function EEGplot(nt,Nlabels)
        bad = find(ifcellis(LAN{ncd}.tag.labels,'bad','c'));
        badA = find(ifcellis(LAN{ncd}.tag.labels,'bad:A'));
        badV = find(ifcellis(LAN{ncd}.tag.labels,'bad:V'));
-       
+       badO = find(ifcellis(LAN{ncd}.tag.labels,'bad:off'));
        if ifcon
            ini_p = fix(1 + ((n_ini-1 )* l_seg));
            fin_p = fix(ini_p + (l_seg -1));
@@ -650,6 +650,8 @@ function EEGplot(nt,Nlabels)
                    color=[1 0.25 0];
                elseif any(LAN{ncd}.tag.mat(i,cnt) == badA)
                    color=[1 0.5 0];
+              elseif any(LAN{ncd}.tag.mat(i,cnt) == badO)
+                   color=[0 0 0];    
                end
            end
            end

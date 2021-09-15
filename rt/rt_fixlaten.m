@@ -27,8 +27,8 @@ getcfg(cfg,'resp')
 getcfg(cfg,'force',0) 
 end
 
-getcfg(cfg,'dw_delta', 200)
-getcfg(cfg,'up_delta', 200)
+getcfg(cfg,'dw_delta', 50)
+getcfg(cfg,'up_delta', 50)
 % firt firts point
 laten = laten - laten(1);
 laten = laten + RT.laten(f); 
