@@ -1,4 +1,6 @@
 function stre = ls_lan(e,e2)
+% v0.2 
+% P Billeke
 
 if nargin == 0 || isempty(e)
 stre = ls;
@@ -36,6 +38,8 @@ stre(isspace(stre)) = ' ';
             
             
            NO =  ifcellis(stre,'');
+           stre(NO) = [] ;
+           NO =  ifcellis(stre,'isempty(@)');
            stre(NO) = [] ;
             
          
