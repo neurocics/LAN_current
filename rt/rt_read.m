@@ -1,5 +1,5 @@
 function RT = rt_read(cfg,LAN)
-%     v.0.2
+%     v.0.3
 %     <*LAN)<|
 % Read event file for reaction time analysis and modeling
 %
@@ -38,6 +38,7 @@ function RT = rt_read(cfg,LAN)
 % Pablo Billeke
 % Francisco Zamorano
 
+% 19.02.2022  Fix pauses in oresentation 
 % 29.08.2019  !!! Crucial fix for 'RT' case for sample rate other than 1000 !!!! 
 % 02.03.2016 fix read presnetation data and string logfile 
 % 03.05.2012 add invert option to search estimuli related to a response
@@ -48,7 +49,7 @@ function RT = rt_read(cfg,LAN)
 % 30.03.2012  add posibility to add RT to LAN, and correct first latency
 % 25.11.2011 fix ev2 read
 % 21.11.2011
-
+warning off
 if nargin == 0
    help rt_read
    if strcmp(lanversion('t'),'devel')
@@ -129,6 +130,9 @@ else
     ifstop = 0;
 end
 
+
+%----
+if_pause=false;
 
 switch cfg.type
   case 'presentation'
@@ -260,6 +264,18 @@ switch cfg.type
         if strcmp(header{4,1}, 'Subject')
         suject = data{1,1};
         data = data(:,2:c);
+        end
+        
+        %find and fix pauses 
+        if_pause = find(fun_in_cell(raw(:,3), 'strcmp(@,''Pause'')'));
+        if ~ isempty(if_pause)
+            PAUSES(:,1) = if_pause;
+            PAUSES(:,2) = fun_in_cell(raw(if_pause,5),'str2num(@)');
+            PAUSES(:,3) = fun_in_cell(raw(if_pause,8),'str2num(@)');
+            disp([ ' '  num2str(numel(if_pause)) ' pauses have been detected ... please fix it if it is necesary  '])  
+            if_pause=true;
+        else
+            if_pause=false;
         end
         
         ne = 3 ;
@@ -406,15 +422,33 @@ for r = delind'
     
 end
 
+
+
+    % fix laten for each pauses 
+    if if_pause
+      for ip = size(PAUSES,1):-1:1
+          laten(laten>(PAUSES(ip,2))) = laten(laten>(PAUSES(ip,2))) + PAUSES(ip,3);
+          misslaten(misslaten>(PAUSES(ip,2))) = misslaten(misslaten>(PAUSES(ip,2))) + PAUSES(ip,3);
+      end
+      RT.PAUSES=PAUSES;
+      RT.PAUSES(:,2:3) = RT.PAUSES(:,2:3) * unit;
+    end
+
+
+
 if sum(misslaten) >0
     ifml=1;
     misslaten = misslaten* unit;
 else
     ifml=0;
 end
+
+
+    
     rt = rt * unit;
     laten = laten * unit;
     tr_tt = tt *unit;
+    
 
 
 if (iflbc)&&(~f_laten)
@@ -494,3 +528,4 @@ repetidos = find((diff(RT.laten))==0);
 RT = rt_del(RT,repetidos);
 
 end
+warning on
