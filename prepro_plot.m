@@ -1,6 +1,6 @@
 
 function prepro_plot(LAN)
-%         v.0.2
+%         v.0.3
 %
 %         GUI para realizar prepocesamiento de matrices segemnnatadas
 %             tambien sirve de visualizaci??n para datos continuos 
@@ -9,7 +9,7 @@ function prepro_plot(LAN)
 %  See Also VOL_THR_LAN , LAN_INTERP , FFTAMP_THR_LAN
 %
 %  Pablo Billeke
-%
+%  27.02.2022 (PB) fix n_detec option  
 %  27.08.2021 (PB) improbe ICA components visualization 
 %  11.06.2020 (PB) funcion n> 
 %  21.04.2015 (PB) add ICA decomposition and componente view  
@@ -105,7 +105,8 @@ global ncomp
 ncomp=1;
 global tncomp
 tncomp = [];
-
+global n_detec
+n_detec=3;
 global viewCHAN
 viewCHAN =1;
 global bot_chan 
@@ -1774,12 +1775,21 @@ function MAS_button_Callback(source,eventdata,handles)
         end
        elseif strcmp(get(source, 'String'),'N>');
        try
-            n_detec = evalin('base','lan_temp_var.n_detec')
+           
+           if n_detec ~= evalin('base','lan_temp_var.n_detec')
+            n_detec = evalin('base','lan_temp_var.n_detec');
+            
+            disp('######## LAN #######################')
+            disp('#   using:                          #')
+            disp(['#   lan_temp_var.n_detec =  [' num2str(n_detec) ']   #'])
+            disp('####################################')
+           end
+      
        catch
-            n_detec =2;   
+           % n_detec =2;   
        end
         
-        r = find((LAN{ncd}.accept==0)|(sum(LAN{ncd}.tag.mat,1) >= n_detec));
+        r = find((LAN{ncd}.accept==0)|(sum(LAN{ncd}.tag.mat>0,1) >= n_detec));
         ri = find(r>cnt,1,'first');
         if ~isempty(ri)
             cnt = r(ri);
@@ -1823,9 +1833,17 @@ function MENOS_button_Callback(source,eventdata,handles)
         end
    elseif strcmp(get(source, 'String'),'<N');
        try
-            n_detec = evalin('base','lan_temp_var.n_detec')
+           if n_detec ~= evalin('base','lan_temp_var.n_detec')
+            n_detec = evalin('base','lan_temp_var.n_detec');
+            
+          disp('######## LAN #######################')
+          disp('#   using:                          #')
+          disp(['#   lan_temp_var.n_detec =  [' num2str(n_detec) ']   #'])
+          disp('####################################')
+           end
+            
        catch
-            n_detec =2;   
+            %n_detec =2;   
        end
         
         r = find((LAN{ncd}.accept==0)|(sum(LAN{ncd}.tag.mat,1) >= n_detec));
@@ -1936,11 +1954,13 @@ function CAMBIO_button_Callback(source,eventdata,handles)
       set(GUIMAS, 'String','>');
   elseif strcmp(get(GUIMENOS, 'String'),'<');
       set(GUIMENOS, 'String','<N');
-      set(GUIMAS, 'String','N>');    
-      
+      set(GUIMAS, 'String','N>'); 
+      try
+      n_detec = evalin('base','lan_temp_var.n_detec');
+      end
       disp('######## LAN #######################')
-      disp('#   used:                          #')
-      disp('#   lan_temp_var.n_detec :  [ 3]   #')
+      disp('#   using:                          #')
+      disp(['#   lan_temp_var.n_detec =  [' num2str(n_detec) ']   #'])
       disp('####################################')
 
    elseif strcmp(get(GUIMENOS, 'String'),'<N');

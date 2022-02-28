@@ -326,7 +326,7 @@ if strcmp(cfg.method,'wltconvol')
   no_t = 0;
   for perlop = 1:numper
       % LAN
-      if isempty(data.trial{perlop})
+      if isempty(data.trial{perlop})||(LAN.accept(perlop)==0)
           no_t = no_t + 1; % rejected trials!!
          continue
       end
