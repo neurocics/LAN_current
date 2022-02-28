@@ -199,7 +199,7 @@ LAN.time =[];
 for t = 1:length(LAN.data)
    if LAN.accept(t)
 LAN.time{t} = linspace(time(t,1) , time(t,2) , length(LAN.data{t}));
-data.offset(t) = 0; %round(LAN.time{t}(1)*LAN.srate); %0 ;  REVISAR !!!
+data.offset(t) = round(LAN.time{t}(1)*LAN.srate); %0 ;  REVISAR !!!0; %
    end
        
 end
