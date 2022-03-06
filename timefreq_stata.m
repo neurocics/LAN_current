@@ -16,7 +16,8 @@ function GLAN = timefreq_stata(GLAN,cfg)
 %     group = [g1 g1 g2 g2]
 %     matdif   = [1 -1 2 -2]
 %     matdif_transform = 'log', 'none', 'log10'
-%
+%  stata =   'nonparametric' || 1
+%             
 %  data_type = 'pow', 't', 'b'      
 %  alpha 	=0.05;
 %  m		='d'; OR ='i' 	% RELATIONSHEAP TO THE SAMPLES 'i'NDEPENDENT OR 'd'EPENDET
@@ -119,15 +120,27 @@ end
 
 
 %-- type of stadistic
+glm_matrix = getcfg(cfg,'glm_matrix',[]);
 stata = getcfg(cfg,'stata','nonparametric'); % nonparamteric default
 if ischar(stata)
     ifstata = true;
 else 
     ifstata = logical(stata);
-    if ifstata
+    if ifstata && isempty(glm_matrix)
        stata = 'nonparametric';
+    elseif ifstata && ~isempty(glm_matrix)
+       stata = 'glm';
     end
 end
+
+if strcmp(stata,'glm') || strcmp(stata,'robust') || strcmp(stata,'lme')
+    RegressorOI = getcfg(cfg, 'RegressorOI',1);
+end
+
+% if strcmp(stata,'glm') && isempty(glm_matrix)
+%     
+% end
+
 %-- 
 
 
@@ -379,9 +392,11 @@ for g = unique(abs(group))
 %    pasog = pasog+1;
     
 texto = plus_text(texto,[ 'group: ' groupname{abs(g)} ]); 
+disp_lan(texto)
 for s = 1:length(sujetos{g})
-    texto = plus_text(texto,['load subject files ... '  ]);
-    disp_lan(texto)
+    %texto = plus_text(texto,['load subject files ... '  ]);
+    
+    fprintf(['load subject files ... '  ])
     
     warning off
     filenameA = strrep( filename ,'%S',sujetos{g}{s});
@@ -468,7 +483,8 @@ end
 
 
 %-- EXTRAC DATA FOR LAN SINGLE STRUCTURS
-    texto = last_text(texto,['load subject file ' sujetos{g}{s}   ]);
+    %texto = last_text(texto,['load subject file ' sujetos{g}{s}   ]);
+    fprintf(['>>> ' sujetos{g}{s}  '\n' ]);
     for c = cond(group==g)
         
         
@@ -759,6 +775,8 @@ else
     mdif=0;
 end
 
+
+% smooth 
 if ifsmooth==1
    for i = 1:length(abs(group))
        paso= v_freq{abs(group(i)),cond(i)};
@@ -779,32 +797,86 @@ if ifstata && ~mdif && ~no1_st
     a =[];
     for i = 1:length(cond)
     a{i} = v_freq{group(i),cond(i)};
-    if length(bl)>1
-        nm1 = find_approx(GLAN.timefreq.time , bl(1));
-        nm2 = find_approx(GLAN.timefreq.time , bl(end));
-        for nm = 1:size(a{i},4)
-            a{i}(:,:,:,nm) = normal_z(a{i}(:,:,:,nm) ,a{i}(:,:,nm1:nm2,nm),norma );
+        % baseline correction
+        if length(bl)>1
+            nm1 = find_approx(GLAN.timefreq.time , bl(1));
+            nm2 = find_approx(GLAN.timefreq.time , bl(end));
+            for nm = 1:size(a{i},4)
+                a{i}(:,:,:,nm) = normal_z(a{i}(:,:,:,nm) ,a{i}(:,:,nm1:nm2,nm),norma );
+            end
         end
     end
+    
+    
+    switch stata
+        case {'nonparametric'}
+            cfg.paired = strcmp(m,'d');
+            cfg.text = texto;
+            cfg.method = 'rank';
+            %[pval, hh, stat] = nonparametric(a,[],alpha,m,0,texto);
+            [pval, stat] = lan_nonparametric(a,cfg);
+        case {'glm','robust', 'mle'}
+            cfgM=[];
+            cfgM.type = 'glm'; % , 'robust', 'lme' % -------------------------------------------------------
+            cfgM.ops = ['pre(Second Level ' stata    ' MODEL)' ];
+            cfgM.texto = texto;
+            
+%             % delet intercep regressors  
+%             intercepto = glm_matrix==1;
+%             intercepto = sum(intercepto,1)==size(intercepto,1);
+%             if any(intercepto)
+%             glm_matrix(:,intercepto) = []; 
+%             end
+           
+            Regressors=[];
+            for nR =1:size(glm_matrix,2)
+               Regressors{nR} =  glm_matrix(:,nR)';
+            end
+            
+            for i = 1:length(a)
+                if isempty(Regressors)
+                [pval stat] = lan_model_stat(a{i}, cfgM);    
+                else
+                [pval stat] = lan_model_stat(cat(2,a(i),Regressors{:}), cfgM);
+                end
+                %pval{i}=r_pval;
+                %stat{i}=r_stats;
+            end
+            
+            % for MCP calculatation will be use A and not  v_freq
+            %clear v_freq
+        otherwise
+            error(['ERROR: stata: '  stata ' UNKOWN'] );
     end
-    cfg.paired = strcmp(m,'d');
-    cfg.text = texto;
-    cfg.method = 'rank';
-    %[pval, hh, stat] = nonparametric(a,[],alpha,m,0,texto);
-    [pval, stat] = lan_nonparametric(a,cfg);
-    try
-    GLAN.timefreq.stat{nbcomp} = stat.zval;
+    
+    % Save results in the LAN structur 
+    
+    if iscell(pval)
+    GLAN.timefreq.stat(:,nbcomp) = stat(:);   
+    GLAN.timefreq.pval(:,nbcomp) = pval(:);
+    for np = length(pval)
+    hh = false(size(pval{np}));
+    hh(pval{np}<alpha)=true;
+    GLAN.timefreq.hh{np,nbcomp} = hh  ;
+%     if length(a)==2 &&  ~strcmp(stata,'nonparametric');
+%        hhsig = sign(mean(a{1},4)- mean(a{2},4));
+%     elseif length(a)==1 &&  ~strcmp(stata,'nonparametric');
+%        hhsig = sign(mean(a{1},4)); 
+%     end
     end
+    else
+
+    GLAN.timefreq.stat{nbcomp} = stat;   
     GLAN.timefreq.pval{nbcomp} = pval;
     hh = false(size(pval));
     hh(pval<alpha)=true;
     GLAN.timefreq.hh{nbcomp} =hh  ;
-    if length(a)==2
+    if length(a)==2 %&&  ~strcmp(stata,'nonparametric');
        hhsig = sign(mean(a{1},4)- mean(a{2},4));
-    elseif length(a)==1
+    elseif length(a)==1 %&&  ~strcmp(stata,'nonparametric');
        hhsig = sign(mean(a{1},4)); 
     end
-    
+    end
 elseif ifstata && mdif && ~no1_st
      
     gdata =[];
@@ -923,11 +995,12 @@ end
 
  clear v_freq;
  
-if ifstata  & ~no1_st
+ % check redundance !!
+if ifstata  && ~no1_st && strcmp(stata,'nonparametric')
 GLAN.timefreq.pval{nbcomp} = pval;
 GLAN.timefreq.hh{nbcomp} = hh;
 GLAN.timefreq.stat{nbcomp} = -log(pval);
-elseif ifstata  & no1_st
+elseif ifstata  && no1_st && strcmp(stata,'nonparametric')
 pval= GLAN.timefreq.pval{nbcomp};
 hh= GLAN.timefreq.hh{nbcomp};
 stat= GLAN.timefreq.stat{nbcomp};
@@ -938,9 +1011,27 @@ end
 % MULTIPLE COMPARISON CORRECTION 
 % --
 
+if strcmp(stata,'glm')||strcmp(stata,'robust')
+             intercepto = glm_matrix==1;
+             intercepto = sum(intercepto,1)==size(intercepto,1);
+             if any(intercepto) && size(glm_matrix,2)==1
+%               glm_matrix(:,intercepto) = []; 
+                indexROF=1;
+             else
+                indexROF=RegressorOI+1; 
+             end    
+    
+    stat = GLAN.timefreq.stat.t{indexROF};
+    pval = GLAN.timefreq.pval{indexROF};
+    hh = false(size(pval));
+    hh(pval<alpha) = true;
+end
+
+
+
 if (mcp == 1) && ifstata
         disp('Making Multiple Comparision correction')
-        stat = -log(pval);
+        %stat = -log(pval);
 try 
    electrodemat = GLAN.chanlocs(1).electrodemat;
    em=1;
@@ -952,6 +1043,7 @@ end
 %-----------
 
 if em~=1
+    stat = -log(pval);
     [hhc pvalc cluster] = cl_random_2d(hh,stat,alpha,nrandom);
 else
     %--- Mask for fast computation 
@@ -971,7 +1063,7 @@ else
        
     
     % --  reload subject
-    if nr&&strcmp(cfg.m,'d')
+    if nr&&strcmp(cfg.m,'d')&&strcmp(stata, 'nonparametric')
         
             %--  permute per subject 
             for g = unique(group)
@@ -1040,8 +1132,8 @@ else
             hh(pval<alpha)=true; 
 
             %--
-            
-    elseif ~nr&&strcmp(cfg.m,'i')
+    %elseif    
+    elseif ~nr&&strcmp(cfg.m,'i') 
         
         
          rpaso2 = [];
@@ -1062,17 +1154,43 @@ else
                 end
          end
          rpaso2 = cat(4,rpaso2{:});
+    elseif ~nr&&(strcmp(stata, 'glm') || strcmp(stata, 'robust') )%% add other    mle ?
         
-    elseif nr&&strcmp(cfg.m,'i')
+         if length(cond) >1
+            error([' Use MCP for glm model each only per one condition  once !!!!!!']) 
+         end
+      
+%             % detec intercep MODEL   
+             intercepto = glm_matrix==1;
+             intercepto = sum(intercepto,1)==size(intercepto,1);
+             if any(intercepto) && size(glm_matrix,2)==1
+%               glm_matrix(:,intercepto) = []; 
+                indexROF=1;
+             else
+                indexROF=RegressorOI+1; 
+             end            
+        
+        stat     = GLAN.timefreq.stat.t{indexROF};
+        hhsig = sign(stat);
+        pval = GLAN.timefreq.pval{indexROF};           
+        hh = false(size(pval));
+        hh(pval<alpha)=true;         
+        hhsig = sign(stat); 
+         
+         
+        
+    elseif nr&&strcmp(cfg.m,'i') && strcmp(stata, 'nonparametric') 
          real_c = ones(1,n_cond(1));
          for i =  2:length(n_cond)
              real_c = [ real_c ones(1,n_cond(i))*i];
          end
          pass=0;
-         while pass==0
+         while pass<100
              rand_c = real_c(randperm(length(real_c)));
-             if abs(corr(rand_c(:),real_c(:)))<.5 % check it !
-                 pass=1;
+             if abs(corr(rand_c(:),real_c(:)))<.75 % check it !
+                 pass=100;
+             else
+                 pass=pass+1;
              end
          end
          
@@ -1102,38 +1220,136 @@ else
         stat     = -log(pval);%stat.zval;
         hh = false(size(pval));
         hh(pval<alpha)=true; 
-         
+
+    elseif  nr&&(strcmp(stata, 'glm') || strcmp(stata, 'robust'))  %% add other    mle ?
+        
+        
+%             % detec intercep MODEL   
+             intercepto = glm_matrix==1;
+             intercepto = sum(intercepto,1)==size(intercepto,1);
+             if any(intercepto) && size(glm_matrix,2)==1
+%               glm_matrix(:,intercepto) = []; 
+                indexROF=1;
+                         % Permuting Regressor for intercept model %% it is
+                         % nor the preference, use non paramteric stat and
+                         % firts level permutacion !!!!!!!!!
+                         real_RegressorOI = glm_matrix(:,RegressorOI);
+                         pass=0;
+                         %while pass <100;
+                             rand_RegressorOI = real_RegressorOI .* (sign(randi(2,size(real_RegressorOI))-1.5));
+                         %    if abs(corr(real_RegressorOI(:),rand_RegressorOI(:)))<.6 % check it !
+                         %        pass=100;
+                         %    else
+                         %        pass=pass+1;
+                         %    end
+                         %end
+             else
+                indexROF=RegressorOI+1; 
+                         % Permuting Regressor of interes 
+                         real_RegressorOI = glm_matrix(:,RegressorOI);
+                         pass=0;
+                         while pass<100
+                             rand_RegressorOI = real_RegressorOI(randperm(length(real_RegressorOI )));
+                             if abs(corr(real_RegressorOI(:),rand_RegressorOI(:)))<.6 % check it !
+                                 pass=100;
+                             else
+                                 pass=pass+1;
+                             end
+                         end
+             end 
+        
+        
+        
+        
+
+        
+        
+        
+        
+            cfgM=[];
+            cfgM.type = stata; % , 'robust', 'lme'
+            cfgM.ops = ['pre(Second Level ' stata '  MODEL)' ];
+            cfgM.texto = texto;
+            
+
+           
+
+
+            Regressors=[];
+            for nR =1:size(glm_matrix,2)
+                if nR== RegressorOI
+                        Regressors{nR} =  rand_RegressorOI(:)';
+                else
+                        Regressors{nR} =  glm_matrix(:,nR)';
+                end
+            end
+            
+                %-- fast computing, BUT decress precision !!!
+                borrame = ones(size(mcp_mask));
+                borrame(mcp_mask==1)=NaN;            
+                 for ia = 1:length(a)
+                 a{ia} = a{ia}.*repmat(borrame,[1 1 1 size(a{ia},4)]);
+                 end
+                %--
+            
+            
+            
+            for i = 1:length(a)
+                if isempty(Regressors)
+                [pval, stat] = lan_model_stat(a{i}, cfgM);    
+                else
+                [pval, stat] = lan_model_stat(cat(2,a(i),Regressors{:}), cfgM);
+                end
+                %pval{i}=r_pval;
+                %stat{i}=r_stats;
+            end
+
+  
+        stat     = stat.t{indexROF};
+        pval = pval{indexROF};           
+        hh = false(size(pval));
+        hh(pval<alpha)=true;         
+        hhsig = sign(stat);
+        
+        
     end %--
     
-            % -- 4d matrix of adjacencia
+             
             
+            %--- extract the sign of the cluster % --- borrara redundacias
+            %y calcualr previa,ente 
             if length(group)==2 && ~nr
                        Sig =  GLAN.timefreq.data{group(1),cond(1)}-GLAN.timefreq.data{group(2),cond(2)};
                        Sig = sign(Sig);
-            elseif exist('hhsig','var')==1 && ~nr
-                   Sig = hhsig;
-            elseif length(paso)==2 && nr
+            elseif exist('hhsig','var')==1 %&& ~nr
+                   Sig = hhsig;     
+            elseif exist('paso','var')==1 && length(paso)==2 && nr
                        Sig =  mean(paso{1},4)-mean(paso{2},4);
                        Sig = sign(Sig);  
-            elseif length(paso)==1 && nr
+            elseif exist('paso','var')==1 && length(paso)==1 && nr
                        Sig =  mean(paso{1},4);
                        Sig = sign(Sig);                        
             else
                         Sig = ones(size(hh));
             end
+            
+            
+            %-- 4d matrix of adjacencia  
                     hh1 = hh;
                     hh2 = hh;
                     hh1(Sig==-1)=false;
                     hh2(Sig==1)=false;
             
                 for e   = 1:nbchan
-                    [ye(e) xe(e)] = find(electrodemat==e);
+                    [ye(e), xe(e)] = find(electrodemat==e);
                     
                     
                     newhh1(ye(e),xe(e),:,:) = hh1(:,e,:);
                     newhh2(ye(e),xe(e),:,:) = hh2(:,e,:);
                 end
                 
+                
+             %--  find cluster    
                 pasoclusig = bwlabeln(newhh1);
                 pasoclusig2 = bwlabeln(newhh2);
                 pasoclusig2(pasoclusig2>0) = pasoclusig2(pasoclusig2>0) + max(pasoclusig(:));
@@ -1142,15 +1358,18 @@ else
                 for e  = 1:nbchan
                 clusig(:,e,:) = pasoclusig(ye(e),xe(e),:,:);
                 end
-                clear paso*
+                clear pasoc*
              % --
             
-             % -- max cluster
+             % -- find max cluster
                 fin_nc = max(max(max(max(   clusig   ))));
                 for nc = 1:fin_nc;
                     statcluster(nc) = sum(sum(sum(sum( abs(  stat(clusig==nc)  )  ))));
                 end% for nc    
                 
+                
+                
+              % -- real and permute cluster 
                 if nr
                 maxcluster = max(statcluster);    
                 nr_cluster(nr) = maxcluster(1);
@@ -1161,7 +1380,11 @@ else
              % --
 
     end %for nr
-    clear rpaso*
+    
+    % claer large auxiliar variable 
+    %clear rpaso* a v_freq hh* pval 
+    
+    
     % -- mantercalo p value per cluster 
     disp(' making mantercalo p value per cluster')
     pvalc = ones(size(GLAN.timefreq.pval{nbcomp}));
@@ -1218,7 +1441,9 @@ GLAN.infolan.date = date;
       end
 
 %%%%%%%%%%%%%%%%%%%%
-disp(['DONE'])
+GLAN.timefreq.cfg = cfg;
+texto = plus_text(texto,['DONE']);
+disp_lan(texto);
 end%%% function
 
     function  [A n] = fix_cero_end(A,n)

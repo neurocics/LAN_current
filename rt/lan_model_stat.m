@@ -1,13 +1,18 @@
-function [pval, stats] = lan_model_stat(y,varargin)
-% v.0.4
+function [pval, stats] = lan_model_stat(varargin)
+% v.0.5
 % [pval stats] = lan_model_stat(y,x1,x2,...,cfg)
+% [pval stats] = lan_model_stat( {y,x1,x2,...}, cfg)
+%
+%  Y            : n_dim matrix of data 
+%  X1, X2,...   : Vectors of Regressors 
 %
 % cfg.type = 'glm' , 'robust', 'lme'
-% cfg.ops = option for bar  SEE bar_wait.m  
-%
+% cfg.ops = 'option' % for bar  SEE bar_wait.m  
+% cfg.text= 'char'   % SEE bar_wait.m  
 % Dependences: Statistic Toolbox
 %
 % Pablo Billeke
+% 03.03.2022 --> Visualization compatibility 
 % 21.06.2017 --> implenetado modelo mixto LME, REQUIERE MATLAB 2015 en
 %                adelante!!!; ultimo X, es el factoro de agrpaci?n para
 %                intercepto!!!!
@@ -26,19 +31,27 @@ end
 
 if isstruct(varargin{end})
   cfg = varargin{end};
-  nx = length(varargin)-1;  
+  varargin = varargin(1:end-1);
+%  nx = length(varargin)-1;  
 else
   cfg = [];
-  nx = length(varargin);
+%  nx = length(varargin);
 end
-varargin = varargin(1:nx);
 
+% check this 
+if length(varargin)==1 && iscell(varargin{1});
+   varargin = varargin{1}; 
+end
+y=varargin{1};
+varargin(1)=[];
+varargin = varargin(1:end);
+nx=length(varargin);
 
 %cfg
 ntype = getcfg(cfg,'type','glm');
 ops = getcfg(cfg,'ops',' ');
-
-
+texto = getcfg(cfg,'texto', [' ']);
+texto = plus_text(texto,['Model fitting  ...'  ]);
 dimen = size(y);
 ns = dimen(end);
 
@@ -90,7 +103,7 @@ switch ntype
     
     
     for p = 1:np
-    bar_wait(p,np,ops);
+    bar_wait(p,np,ops,texto);
     % no perform regretion with NaNs    
     if any(isnan(y(p,:)))   
         continue
@@ -120,7 +133,7 @@ case {'glm','lm'}
     x_s = [ x_s ' )  '];
 
     for p = 1:np
-    bar_wait(p,np,ops);
+    bar_wait(p,np,ops,texto);
     % no perform regretion with NaNs    
     if any(isnan(y(p,:)))   
         continue
@@ -144,7 +157,7 @@ case 'robust'
     x_s = [ x_s ' )  '];
 
     for p = 1:np
-    bar_wait(p,np,ops);
+    bar_wait(p,np,ops,texto);
     % no perform regretion with NaNs    
     if any(isnan(y(p,:)))   
         continue
