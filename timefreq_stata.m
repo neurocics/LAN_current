@@ -143,7 +143,12 @@ end
 
 %-- 
 
+savetempfile = getcfg(cfg, 'savetempfile',0);
+tempfilename = getcfg(cfg, 'tempfilename','');
 
+if ~isempty(tempfilename)
+ savetempfile=1
+end
 
 try
 cond = cfg.comp;
@@ -1363,6 +1368,10 @@ else
             
              % -- find max cluster
                 fin_nc = max(max(max(max(   clusig   ))));
+                if isstruct(stat) && isfield(stat,'zval');
+                   stat =  stat.zval;
+                end
+                
                 for nc = 1:fin_nc;
                     statcluster(nc) = sum(sum(sum(sum( abs(  stat(clusig==nc)  )  ))));
                 end% for nc    
@@ -1378,6 +1387,11 @@ else
                 reals_clusig = clusig;
                 end
              % --
+             if savetempfile && nr && mod(nr,50)==0
+                
+                 save(['paso_nrandom_' tempfilename  '_' num2str(nr) ],'nr_cluster' )
+                 
+             end
 
     end %for nr
     
