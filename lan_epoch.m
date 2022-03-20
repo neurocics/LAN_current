@@ -34,8 +34,8 @@ elseif isstruct(LAN)
         try LAN = rmfield(LAN,'trials');end
         LAN = lan_check(LAN);
         %LAN.event =[];
-    elseif size(LAN.time,1) == 1
-        if LAN.time == [0 0 0]
+    elseif size(LAN.time,1) == 1 && sum(LAN.time == [0 0 0])==3
+        if sum(LAN.time == [0 0 0])==3
         disp('LAN.time = [0,0,0]')
         LAN.data = [];
         try LAN = rmfield(LAN,'trials');end

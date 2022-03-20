@@ -1,21 +1,25 @@
-function LAN = lan_segment_selected(LAN,seg_time)
+function LAN = lan_segment_selected(LAN,seg_time,overlap)
 % <??LAN)<] toolbox
-% v.0.2
+% v.0.3
 %
 % Segment a continuos recording of previous segemnted recording in
 % selected araes.
 %     seg_time = []  for segmented by exact time of each selected areas
 %                [s] for s second windows in the selected areas,
-%                    with overlaping
+%     overlap =  [s] overlaping with segment 
 %
 % Pablo Billeke
 
+% 20.03.2022 add overlaping 
 % 28.04.2020 fixed multiples trials segmentation 
 % 17.01.2013
 
 %getcfg(cfg,'seg_time',[]);
 if nargin < 2
     seg_time = [];
+end
+if nargin < 3    
+    overlap = 0 ;
 end
 
 ns = 0;
@@ -56,13 +60,14 @@ end
 % segmentaci??n en tramos del mismo tama??o
 if ~isempty(seg_time)
     np = ceil(seg_time * LAN.srate); %seg_time en puntos
+    op = ceil(overlap * LAN.srate);
     %rng = 0;
     % resegment in seg_time fragment
     nsegment = {};
     ptimefinal = [];
     for s = 1:ns
         if size(segment{s},2)>= np;
-            [paso, pt] = resegment(segment{s},np, ptime(s));
+            [paso, pt] = resegment(segment{s},np, ptime(s),op);
             nsegment = { nsegment{:} , paso{:} };
             ptimefinal = [ptimefinal pt];
         end
@@ -85,9 +90,9 @@ LAN.time(:,3) = ptimefinal;
 end
 
 
-function [nsegment, ptime] = resegment(segment,np, ptime)
+function [nsegment, ptime] = resegment(segment,np, ptime,op)
 
-baseptime = (1:np:length(segment)-np) - 1;
+baseptime = (1:(np-op):length(segment)-np) - 1;
 ptime = baseptime+ptime;
 nsegment = cell(size(ptime));
 for c = 1:length(ptime)

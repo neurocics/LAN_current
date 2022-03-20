@@ -557,7 +557,7 @@ function EEGplot(nt,Nlabels)
        if ~ifax
            
            if ifcon
-               n_ini = 1;
+               n_ini = 1 ;
                l_seg = LAN{ncd}.srate;
                nCn = (n_ini * l_seg) -1;
            else
