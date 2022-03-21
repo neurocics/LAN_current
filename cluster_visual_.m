@@ -59,6 +59,11 @@ Data(c_clu==0)=NaN;
 Data = c_clu;
 
 subplot('Position',[ 0.1 0.55 0.60 0.4 ])
+
+%time = GLAN.timefreq.
+
+
+
 pcolor(GLAN.timefreq.time, GLAN.timefreq.freq,...
     (squeeze(nansum(Data,2)))), shading flat
 colormap(hot(1000))

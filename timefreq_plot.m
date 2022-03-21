@@ -166,7 +166,11 @@ for ic = 1:length(GLAN.timefreq.comp)
     if size(GLAN.timefreq.comp{ic},1) ==1
       GLAN.timefreq.comp{ic}(2,:) = 1;
     end
-    if ~isfield(GLAN.timefreq.cfg, 'norma') || length(GLAN.timefreq.cfg.norma)<ic || isempty(GLAN.timefreq.cfg.norma{ic})
+    if  isfield(GLAN.timefreq.cfg, 'norma')  && ischar(GLAN.timefreq.cfg.norma)
+       norma{ic} = GLAN.timefreq.cfg.norma;
+       GLAN.timefreq.cfg.norma  = [];
+       GLAN.timefreq.cfg.norma = norma;
+    elseif ~isfield(GLAN.timefreq.cfg, 'norma') || length(GLAN.timefreq.cfg.norma)<ic || isempty(GLAN.timefreq.cfg.norma{ic})
       GLAN.timefreq.cfg.norma{ic} = ' ';  
     end
     if ~isfield(GLAN.timefreq.cfg, 'bl') || length(GLAN.timefreq.cfg.bl{ic})<2
@@ -461,7 +465,12 @@ end
                 set(GUIbl,'String',vec2str(GLAN.timefreq.cfg.bl{val}(:))) 
                 lb_Callback(GUIbl)
                 nor_Callback(GLAN.timefreq.cfg.norma{val})
-                if GLAN.timefreq.cfg.s{val}=='i'
+                if~iscell(GLAN.timefreq.cfg.s)
+                   s{val}=GLAN.timefreq.cfg.s;
+                   GLAN.timefreq.cfg.s = [];
+                   GLAN.timefreq.cfg.s=s;  
+                end
+                if GLAN.timefreq.cfg.s{val}=='i' %|| 
                    nv = 2;
                 else
                     nv=1;
