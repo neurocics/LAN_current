@@ -1,9 +1,10 @@
 function LAN = vol_thr_lan(LAN,thr,tagname,elec)
 %       <*LAN)<
-%       v.0.1
+%       v.0.2
 %
 %       Detec voltange variations
 %
+% 21.03.2022 fix empty trials 
 % 27.08.2021
 % 16.06.2011
 % Pablo Billeke
@@ -55,6 +56,7 @@ tt = 1:LAN.trials;
 %tt(LAN.accept)=[];% no interpolar trial no aceptados
 
 for nt = tt;
+    if isempty(LAN.data{nt}); continue;end
     for nch = elec% ONLY IN SELECTED ELECTRODES  1:LAN.nbchan 
         d = LAN.data{nt}(nch,:);
         %d = d - mean(d)

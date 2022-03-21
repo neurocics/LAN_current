@@ -1,5 +1,5 @@
 function LAN = fourierp_lan(LAN,cfg)
-%            v.0.0.2
+%            v.0.2
 %           <*LAN)<|    version
 %  cfg.
 %       chn = numero del canal
@@ -11,7 +11,7 @@ function LAN = fourierp_lan(LAN,cfg)
 %
 %  Javier Lopez Calderon
 %  Pablo Billeke
-
+% 21.03.2022 (PB) fix empty trials 
 % 09.04.2012 (PB) change name for compatibilty LAN ~ ERPLAN
 % 24.07.2011 (PB)
 
@@ -97,6 +97,7 @@ else
         end
         for i=1:ntrial
             if iscell(LAN.data)
+                if isempty(LAN.data{i}); continue,end 
                 y = LAN.data{i}(ch,:);
             else
                 y = LAN.data(ch,:,i);
