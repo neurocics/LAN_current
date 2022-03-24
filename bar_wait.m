@@ -18,7 +18,7 @@ function bar = bar_wait(i,n,ops,texto)
 % 8.12.2011
 % 6.12.2011
 
-if fix(100*i/n) == fix(100*(i-1)/n) && (i>1) && (nargin<4) %||nargout==0) 
+if (fix(100*i/n) == fix(100*(i-1)/n)) && (i>1)% && (nargin<4) %||nargout==0) 
     if nargout>0
         bar = [];
     end

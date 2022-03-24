@@ -27,7 +27,7 @@ if abs(ica)
         W = (LAN.ica_weights*LAN.ica_sphere);
         
         if isfield(LAN,'ica_del_comp')
-            added=1;
+            added=0; % fix  me!!!
         else
             added=0;
         end

@@ -1022,8 +1022,10 @@ if strcmp(stata,'glm')||strcmp(stata,'robust')
              if any(intercepto) && size(glm_matrix,2)==1
 %               glm_matrix(:,intercepto) = []; 
                 indexROF=1;
-             else
+             elseif ~any(intercepto) 
                 indexROF=RegressorOI+1; 
+             else
+                indexROF=RegressorOI; 
              end    
     
     stat = GLAN.timefreq.stat.t{indexROF};

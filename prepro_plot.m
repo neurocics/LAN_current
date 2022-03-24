@@ -1,6 +1,6 @@
 
 function prepro_plot(LAN)
-%         v.0.3
+%         v.0.4
 %
 %         GUI para realizar prepocesamiento de matrices segemnnatadas
 %             tambien sirve de visualizaci??n para datos continuos 
@@ -9,6 +9,7 @@ function prepro_plot(LAN)
 %  See Also VOL_THR_LAN , LAN_INTERP , FFTAMP_THR_LAN
 %
 %  Pablo Billeke
+%  22.03.2022 (PB) Bug ICA for aonly EEG channels
 %  27.02.2022 (PB) fix n_detec option  
 %  27.08.2021 (PB) improbe ICA components visualization 
 %  11.06.2020 (PB) funcion n> 
@@ -1148,10 +1149,15 @@ end
                 set(nbCOMP_GUI,'String',num2str(tncomp))
              
                 disp(['runica(LAN,data,''extended'', 1,''pca'',' num2str(tncomp) ' );'])
-            [weights,sphere] = runica(cat(2,LAN{ncd}.data{logical(LAN{ncd}.accept)}),'extended', 1,'pca',tncomp);
+                
+                sel_eeg_ica = logical(fun_in_cell({LAN{ncd}.chanlocs.type}, 'strcmp(@, ''EEG'')'));
+                data_eeg_ica = cat(2,LAN{ncd}.data{logical(LAN{ncd}.accept)});
+                data_eeg_ica = data_eeg_ica(sel_eeg_ica,:);
+                
+            [weights,sphere] = runica(data_eeg_ica,'extended', 1,'pca',tncomp);
             LAN{ncd}.ica_weights = weights;
             LAN{ncd}.ica_sphere = sphere;
-            
+            LAN{ncd}.ica_select = find(sel_eeg_ica);
             set(guiplotICA,'ForegroundColor',fc)
             
         end

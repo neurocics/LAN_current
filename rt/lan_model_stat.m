@@ -127,7 +127,7 @@ switch ntype
 case {'glm','lm'}
     x_s = 'cat(2' ;
     for x=1:nx
-       if ifuni, rp = '1'; else rp = 'p' ; end
+    if ifuni, rp = '1'; else rp = 'p' ; end
        x_s = [ x_s , strrep( strrep(', varargin{x}(p,:)'' ' , 'x' , num2str(x)), 'p' , rp )    ];
     end
     x_s = [ x_s ' )  '];
@@ -139,15 +139,32 @@ case {'glm','lm'}
         continue
     end
     
-    
-    
-    [b a s] = glmfit( eval(x_s) , y(p,:) );
-    for x = 1:nx+1
-    pval{x}(p)=s.p(x);
-    stats.t{x}(p)=s.t(x);
+    %[b a s] = glmfit( eval(x_s) , y(p,:) );
+    x = eval(x_s);
+    yy = y(p,:)'; 
+    b   = (x'*x)\x'*yy;
+      
+    y_fit = x*b;
+    df  = -diff(size(x));
+    s   = (sum((yy-y_fit).^2)/df)^0.5;
+    se  = (diag(inv(x'*x))*s^2).^0.5;
+    T   = real(b./se); % aboid error in redundant regressors ??
+    %P   = (T>=0).*(1 - tcdf(T,df))*2 + (T<0).*(tcdf(T,df))*2;
+ 
+    for x = 1:nx%+1
+    %pval{x}(p)=P(x);
+    stats.t{x}(p)=T(x);
     stats.b{x}(p)=b(x);
     end
     end
+    
+    for x = 1:nx%+1
+    pval{x}=  (stats.t{x}>=0).*(1 - tcdf(stats.t{x},df))*2 + (stats.t{x}<0).*(tcdf(stats.t{x},df))*2;  %P(x);
+    %stats.t{x}(p)=T(x);
+    %stats.b{x}(p)=b(x);
+    end
+    
+    
 case 'robust'
     x_s = 'cat(2' ;
     for x=1:nx

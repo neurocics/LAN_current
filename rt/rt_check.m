@@ -1,7 +1,8 @@
 function RT = rt_check(RT,cfg)
 % <*LAN)<] toolbox
-% v.1
+% v.1.1
 %
+% 22.03.2022 .good 
 % 11.12.2014 .est .rt .resp MUST BE MATRIX 
 % 01.04.2014 fix error
 % 31.03.2014 agrege ifsort option 
@@ -72,7 +73,10 @@ end
 
 % good event
 if ~isfield(RT,'good')
-RT.good=true(size(RT.est));
+    RT.good=true(size(RT.est));
+elseif numel(RT.good)~=numel(RT.est)
+    RT.good=true(size(RT.est));
+    warning('RT.good re-write as true vector ')
 end
 
 % extra check
