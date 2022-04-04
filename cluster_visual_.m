@@ -60,11 +60,11 @@ Data = c_clu;
 
 subplot('Position',[ 0.1 0.55 0.60 0.4 ])
 
-%time = GLAN.timefreq.
+%time = GLAN.timefreq.GLAN.timefreq.timeGLAN.timefreq.freq
 
 
 
-pcolor(GLAN.timefreq.time, GLAN.timefreq.freq,...
+pcolor(...
     (squeeze(nansum(Data,2)))), shading flat
 colormap(hot(1000))
 caxis([0 GLAN.nbchan/2])
@@ -79,9 +79,11 @@ ind2=find(El>=th2);
 
 % FREQ.timefreq.subdatadif
 
-if isfield(GLAN.timefreq, 'stat')
+if isfield(GLAN.timefreq, 'stat') && iscell(GLAN.timefreq.stat)
+    Data = nanmean(mean(GLAN.timefreq.stat{stat_ind}( f1:f2,:,t1:t2  ),3),1); 
 
-Data = nanmean(mean(GLAN.timefreq.stat{stat_ind}( f1:f2,:,t1:t2  ),3),1);   
+elseif isfield(GLAN.timefreq, 'stat') && isstr(GLAN.timefreq.stat)
+    Data = nanmean(mean(GLAN.timefreq.stat.t{GLAN.timefreq.cfg.RegressorOI}( f1:f2,:,t1:t2  ),3),1); 
 
 elseif isfield(GLAN.timefreq, 'subdatadif')
     
