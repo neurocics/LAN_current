@@ -1,7 +1,8 @@
 function LAN = lan_rm_chan(LAN, ind,ica)
-%  v.0.2
+%  v.0.3
 %
 %  Pablo Billeke 
+%  18.04.2022
 %  27 08 2021
 %  add save deleted comp 
 
@@ -34,6 +35,7 @@ if abs(ica)
         
         
         for t = 1:LAN.trials;
+            if ~isempty(LAN.data{t})
             data= LAN.data{t}(LAN.ica_select,:);
             data = W*data;
             comp=data(ind,:);
@@ -44,6 +46,7 @@ if abs(ica)
             LAN.ica_del_comp{t}= [LAN.ica_del_comp{t} ; comp] ;
             else
             LAN.ica_del_comp{t}=comp;   
+            end
             end
         end
     
