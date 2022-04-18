@@ -1,6 +1,6 @@
 
 function prepro_plot(LAN)
-%         v.0.4
+%         v.0.5
 %
 %         GUI para realizar prepocesamiento de matrices segemnnatadas
 %             tambien sirve de visualizaci??n para datos continuos 
@@ -9,7 +9,8 @@ function prepro_plot(LAN)
 %  See Also VOL_THR_LAN , LAN_INTERP , FFTAMP_THR_LAN
 %
 %  Pablo Billeke
-%  22.03.2022 (PB) Bug ICA for aonly EEG channels
+%  18.04.2022 8PB) Bug ICA visualization with empty trials
+%  22.03.2022 (PB) Bug ICA for a only EEG channels
 %  27.02.2022 (PB) fix n_detec option  
 %  27.08.2021 (PB) improbe ICA components visualization 
 %  11.06.2020 (PB) funcion n> 
@@ -1254,15 +1255,19 @@ end
             %    W=eye(size(LAN{ncd}.ica_weights));
             %end
                 for t =1:LAN{ncd}.trials
+                    if LAN{ncd}.accept(t)
                     D{t} = (LAN{ncd}.data{t} - repmat( mean(LAN{ncd}.data{t},2),[ 1 length(LAN{ncd}.data{t})])  ); 
                     D{t} = W*D{t}(LAN{ncd}.ica_select,:); 
+                    end
                 end
                 Tm = timelan(LAN{ncd});
                 
                 % min time por trial with diferent duration 
-                min_p = min((LAN{ncd}.time(:,2) - LAN{ncd}.time(:,1) )* LAN{ncd}.srate);
+                min_p = min((LAN{ncd}.time(LAN{ncd}.accept,2) - LAN{ncd}.time(LAN{ncd}.accept,1) )* LAN{ncd}.srate);
                 for  t =1:LAN{ncd}.trials
+                    if LAN{ncd}.accept(t)
                     D{t} = D{t}(:,1:min_p);
+                    end
                 end    
                 Tm = Tm(1:min_p);
                 D = cat(3,D{LAN{ncd}.accept});
@@ -1281,7 +1286,7 @@ end
             
                   
         else
-            warning('Not ICA componete computed!!')
+            warning('Not ICA components computed!!')
         end
         
     end
