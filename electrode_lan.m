@@ -164,7 +164,7 @@ end
 %%% fix LAN.chanlocs.electrodemat and LAN.chanlocs.electrodemat_names
 
 if  isfield(LAN, 'chanlocs') && isfield(LAN.chanlocs(1), 'electrodemat')
-    %electrodemat = LAN.chanlocs(1).electrodemat;
+    electrodemat = LAN.chanlocs(1).electrodemat;
     try 
         references = LAN.references;
     catch

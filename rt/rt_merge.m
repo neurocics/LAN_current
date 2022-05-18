@@ -3,7 +3,7 @@ function RT =  rt_merge(RT1,RT2,varargin)
 %     <*LAN)<|
 %  
 % Description
-%   Take two RT struct and merge them horizontally.
+%   Take two RT structs and merge them horizontally.
 %
 % Parameters
 %   (RT) R1:     First RT
@@ -12,7 +12,7 @@ function RT =  rt_merge(RT1,RT2,varargin)
 %   (bool) varargin(end):   Boolean. Indicates if sorts the output
 %
 % Returns
-%   (RT) RT:    The merged RT's
+%   (RT) RT:    The merged RTs
 %   
 % Examples
 %   >> RT1

@@ -34,7 +34,7 @@ if nargin == 0
    end
    return
 elseif nargin == 1;
-cfg.format = 'cvs';
+cfg.format = 'txt';
 %cfg.name = 'TABLE.cvs'
 end
 

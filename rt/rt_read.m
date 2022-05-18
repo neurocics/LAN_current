@@ -1,5 +1,5 @@
 function RT = rt_read(cfg,LAN)
-%     v.0.3
+%     v.0.4
 %     <*LAN)<|
 % Read event file for reaction time analysis and modeling
 %
@@ -38,6 +38,7 @@ function RT = rt_read(cfg,LAN)
 % Pablo Billeke
 % Francisco Zamorano
 
+% 18.05.2022  read port conflict in presentation 
 % 19.02.2022  Fix pauses in oresentation 
 % 29.08.2019  !!! Crucial fix for 'RT' case for sample rate other than 1000 !!!! 
 % 02.03.2016 fix read presnetation data and string logfile 
@@ -49,6 +50,7 @@ function RT = rt_read(cfg,LAN)
 % 30.03.2012  add posibility to add RT to LAN, and correct first latency
 % 25.11.2011 fix ev2 read
 % 21.11.2011
+
 warning off
 if nargin == 0
    help rt_read
@@ -192,6 +194,8 @@ else
     ifmiss=0;
 end
 
+if_mis=0;% for presentation only 
+
 % busca los tiempos alreves, 
 getcfg(cfg,'invert',false)
 
@@ -281,6 +285,18 @@ switch cfg.type
         ne = 3 ;
         nt = 4 ;
         ifr = false;
+        
+        % find missing 
+        indMIS = fun_in_cell(raw(:,1),'strcmp(@,''The following output port codes were not sent because of a conflict on the port.'')');
+        if sum(indMIS)==1;
+            if_mis=1;
+           missing.port = fun_in_cell(raw(find(indMIS)+2:size(raw,1),1),'str2num(@)');
+           missing.code = fun_in_cell(raw(find(indMIS)+2:size(raw,1),2),'str2num(@)');
+           missing.time = fun_in_cell(raw(find(indMIS)+2:size(raw,1),3),'str2num(@)')*10;
+        else
+            if_mis=0;
+        end
+        
         
     case {'micromed', 'pos', 'POS'}
         % read file
@@ -429,6 +445,7 @@ end
       for ip = size(PAUSES,1):-1:1
           laten(laten>(PAUSES(ip,2))) = laten(laten>(PAUSES(ip,2))) + PAUSES(ip,3);
           misslaten(misslaten>(PAUSES(ip,2))) = misslaten(misslaten>(PAUSES(ip,2))) + PAUSES(ip,3);
+          missing.time(missing.time>(PAUSES(ip,2))) = missing.time(missing.time>(PAUSES(ip,2))) + PAUSES(ip,3);
       end
       RT.PAUSES=PAUSES;
       RT.PAUSES(:,2:3) = RT.PAUSES(:,2:3) * unit;
@@ -443,6 +460,10 @@ else
     ifml=0;
 end
 
+    % missing
+    if if_mis
+    missing.time = missing.time * unit;
+    end
 
     
     rt = rt * unit;
@@ -501,6 +522,27 @@ if ~ifmiss
     RT = miss2rt(RT);
 end
 
+    % missing
+    if if_mis
+        misport.port=zeros(size(RT.est));
+        misport.latency=zeros(size(RT.est));
+        misport.est=zeros(size(RT.est));
+        
+        for it = 1:numel(missing.time)% it=7
+            misind = find_approx(RT.laten,missing.time(it)-lb);
+            if abs(RT.laten(misind)-missing.time(it)+lb) <19
+            if RT.est(misind) == missing.code(it)
+               misport_port(misind)  = missing.port(it);
+               misport_code(misind)  = missing.code(it);
+               misport_time(misind)  = missing.time(it)+lb;
+               misport_time_error(misind)  = RT.laten(misind)-missing.time(it)+lb;
+            end
+            end 
+        end
+    end
+
+
+
 %---% find correct
 if ifdelim==2
 correct = false(size(RT.est));
@@ -516,11 +558,16 @@ end
 
 % save optcions
 RT.cfg=cfg;
-
+RT.OTHER.misport_port=misport_port;
+RT.OTHER.misport_code=misport_code;
+RT.OTHER.misport_time=misport_time;
+RT.OTHER.misport_time_error=misport_time_error;
 %--%
 if nargin ==2
    RT = lan_add_rt(LAN,RT); 
 end
+
+
 
 
 % elimina repetidos %FIXME !!!
