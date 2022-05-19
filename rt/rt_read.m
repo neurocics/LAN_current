@@ -200,7 +200,7 @@ if_mis=0;% for presentation only
 getcfg(cfg,'invert',false)
 
 if isfield(cfg, 'filename')
-    cfg.filename = fix_path(cfg.filename);
+    %cfg.filename = fix_path(cfg.filename);
 end
 
 %-----%
@@ -524,10 +524,10 @@ end
 
     % missing
     if if_mis
-        misport.port=zeros(size(RT.est));
-        misport.latency=zeros(size(RT.est));
-        misport.est=zeros(size(RT.est));
-        
+        misport_port=zeros(size(RT.est));
+        misport_code=zeros(size(RT.est));
+        misport_time=zeros(size(RT.est));
+        misport_time_error=zeros(size(RT.est));
         for it = 1:numel(missing.time)% it=7
             misind = find_approx(RT.laten,missing.time(it)-lb);
             if abs(RT.laten(misind)-missing.time(it)+lb) <19
