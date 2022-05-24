@@ -2,9 +2,10 @@ function LAN = del_epo(LAN, epocas)
 % Only for simple LAN structur
 % Delete epoch number [epocas]
 %
-% v.0.1.2
+% v.0.2
 % Pablo Billeke
 
+% 24.05.2021 fix compatibility 
 % 23.01.2013
 % 16.11.2010
 % 16.6.2009
@@ -33,6 +34,11 @@ for i  = 1:length(LAN.data)
     if i ~= epocas(cont2)
     data{cont} = LAN.data{i};
     selected{cont} = LAN.selected{i};
+    correct(cont) = LAN.correct(i);
+    accept(cont) = LAN.accept(i);
+    if isfield(LAN,'ica_del_comp')
+    ica_del_comp{cont}=LAN.ica_del_comp{cont};
+    end
     cont = cont + 1;
     else
         data_del{cont2} = LAN.data{i};
@@ -46,8 +52,12 @@ end
 
 LAN.data = data;
 LAN.selected = selected;
+LAN.correct = correct;
+LAN.accept = accept;
 LAN.delete.data_epoch = data_del;
-
+if isfield(LAN,'ica_del_comp')
+LAN.ica_del_comp = ica_del_comp;    
+end
 %%%%-------
 %%%% times
 
@@ -75,11 +85,22 @@ LAN.delete.time_epoch = times_del;
 
 %%%%-------
 %%%% eventos
-try
-LAN = arreglaeventos(LAN,inicio,final);
-catch
-    disp('NO se puedieron leer los eventos')
+
+if isfield(LAN,'RT')
+    
+    LAN.RT = rt_del(LAN.RT,epocas);
+    
+else
+    try
+        LAN = arreglaeventos(LAN,inicio,final);
+    catch
+        disp('NO se puedieron leer los eventos')
+    end
+
 end
+
+
+
 %LAN = rmfield(LAN,'trials');
 LAN = lan_check(LAN);
 
