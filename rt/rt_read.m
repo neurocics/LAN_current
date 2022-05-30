@@ -558,10 +558,12 @@ end
 
 % save optcions
 RT.cfg=cfg;
+if if_mis
 RT.OTHER.misport_port=misport_port;
 RT.OTHER.misport_code=misport_code;
 RT.OTHER.misport_time=misport_time;
 RT.OTHER.misport_time_error=misport_time_error;
+end
 %--%
 if nargin ==2
    RT = lan_add_rt(LAN,RT); 

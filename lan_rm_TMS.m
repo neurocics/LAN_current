@@ -1,5 +1,5 @@
 function LAN = lan_rm_TMS(LAN,cfg)
-%  v.0.3 en prueba 
+%  v.0.4 en prueba 
 %
 % cfg.events  = [x1 x2 ... ] % evente labels that indicated TMS pusle
 % cfg.times  = [s1 s2]      % time to interpolated betweeen TMS pulse  
@@ -9,13 +9,35 @@ function LAN = lan_rm_TMS(LAN,cfg)
 %                             there no n pulse in s4 seg,  cut the segemtation with less that n pulses  
 
 EV = getcfg(cfg,'events');     % EV = find(ifcellis(LAN.RT.OTHER.names,{'S 80','S 81','S 82','S 83','S 84'}));
+
+if iscell(EV)
+    if ischar(EV{1})
+            EV = find(ifcellis(LAN.RT.OTHER.names,EV));  
+    else     
+            pEV = LAN.RT.est==EV(1);
+            for iv = 2:length(EV)
+                pEV = pEV + LAN.RT.est==EV(iv); 
+            end
+                
+    end
+end
+
 P.remp = getcfg(cfg,'times');  %  [-0.0025 0.015];
 npulse = getcfg(cfg,'npulse',5); 
 rm = getcfg(cfg,'rm',true); 
 seg = getcfg(cfg,'seg',false); 
 edge = getcfg(cfg,'edge',0.1);
 time_lim = getcfg(cfg,'time_lim',[]);
+noise_extract =getcfg(cfg,'noise_extract',[]); 
 
+
+if isempty(noise_extract)
+    ifnoise = false;
+else
+    ifnoise=true;
+    noise_time = noise_extract*LAN.srate;
+end
+    
 
 LAN = lan_check(LAN);
 edge = edge*LAN.srate;
@@ -69,18 +91,40 @@ nfix=0;
           
          tmp =  fix(    LAN.RT.laten(EV(evs_l-(nnpulse-1))).*(LAN.srate/1000)  - edge  ): fix((LAN.RT.laten(evs).*(LAN.srate/1000)+edge));
          
-         
-         % PARAica{n_ica}(e,:) =  
+         if ifnoise
+             tmp_noise =  data(fix(    LAN.RT.laten(EV(evs_l-(nnpulse-1))).*(LAN.srate/1000)  - edge - noise_time ) :  fix(    LAN.RT.laten(EV(evs_l-(nnpulse-1))).*(LAN.srate/1000)  - edge  ));
+             tmp_noise_ori = tmp_noise;
+             nan_laps = abs(diff(laten_r));
+             noise_laps_l =fix((length(tmp_noise) + nan_laps)/(npulse+1));
+             for np =  1:npulse
+                tmp_noise(fix(noise_laps_l*np):fix(noise_laps_l*np+nan_laps-1))=nan;
+             end 
+             ind_nan = isnan(tmp_noise);
+             tmp_noise = interpolate_nans(tmp_noise) - tmp_noise_ori;
+             tmp_noise = tmp_noise(ind_nan);
+         end 
          
          
          dt = data(tmp);
+         
+         
          if seg
          PARAica{n_ica}(e,:) = dt(~isnan(dt));
          end
+         
          n_ica=n_ica+1;
+         
          if rm
-         dt = interpolate_nans(dt);
+             ind_nan = isnan(dt);    
+             dt = interpolate_nans(dt);
+             tmp_noise = [tmp_noise tmp_noise];
+             if ifnoise
+                 dt(ind_nan) = dt(ind_nan) + tmp_noise(1:sum(ind_nan));
+             end
          end
+         
+         
+         
          data(tmp)=dt;
          if mod(evs_l,npulse*4)==0
          fprintf('.');
