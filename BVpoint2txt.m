@@ -1,14 +1,30 @@
-function BVpoint2txt(puntos,np,fiduciales,filename) 
+function BVpoint2txt(puntos,np,fiduciales,filename,elec_name) 
 %    <*LAN)<] 
 %    v.0.1
 %
 % BVpoint2txt write a NAME_XYZ.txt file  
 %
-% BVpoint2txt(puntos,np,fiduciales,filename)
+% BVpoint2txt(cfg)
+% BVpoint2txt(puntos,np,fiduciales,filename,elec_name)
 %
+% cfg.
+%     elec_file  = 'file.tgp'
+%     fidu_file  = 'file.fdp'
+%     n_elec    =   n
+%     filename  =  'NAME_XYZ.txt'
+%     elec_name  = {'Cz'm, ...} default = [];
+%
+% P Billeke 
+% 02.06.2022
 
-if nargin <4
-    filename='NAME_XYZ.txt'
+if nargin == 1 && isstruct(puntos)
+    puntos          = getcfg(puntos,'elec_file');
+    fiduciales      = getcfg(puntos,'fidu_file');
+    np              = getcfg(puntos,'n_ele');
+    filename        = getcfg(puntos,'filename','NAME_XYZ.txt');
+    elec_name       = getcfg(puntos,'elec_name',[]);
+elseif nargin <4
+    filename='NAME_XYZ.txt';
 end
 
 
@@ -20,12 +36,20 @@ end
     nl = strfind(str, str(16));
     
     Elec=[];
-    Ename=[];
+    
+    if isempty(elec_name)
+        Ename=[];
+    else
+        Ename = elec_name;
+    end
+    
     for n =6:length(fn)-1
         paso = str(nl(n)+1:fn(n+1));
         k = strfind(paso, '   ') ;
         Elec(n-5,:)= eval([ '[ ' paso(k(1):k(2)) ' ];']);
+        if isempty(elec_name)
         Ename{n-5} = ['E' num2str(n-5)];
+        end
     end
     
     fid = fopen(fiduciales);
