@@ -1,4 +1,4 @@
-function BVpoint2txt(puntos,np,fiduciales,filename,elec_name) 
+function BVpoint2txt(puntos,np,fiduciales,filename,elec_name,del_elec) 
 %    <*LAN)<] 
 %    v.0.1
 %
@@ -20,9 +20,13 @@ function BVpoint2txt(puntos,np,fiduciales,filename,elec_name)
 if nargin == 1 && isstruct(puntos)
     puntos          = getcfg(puntos,'elec_file');
     fiduciales      = getcfg(puntos,'fidu_file');
-    np              = getcfg(puntos,'n_ele');
+    np              = getcfg(puntos,'n_ele',[]);
     filename        = getcfg(puntos,'filename','NAME_XYZ.txt');
     elec_name       = getcfg(puntos,'elec_name',[]);
+    del_elec        = getcfg(puntos,'del_elec',[]);
+elseif nargin <6
+    filename='NAME_XYZ.txt';
+    del_elec=[];
 elseif nargin <4
     filename='NAME_XYZ.txt';
 end
@@ -52,6 +56,16 @@ end
         end
     end
     
+    if isempty(np)
+        np = length(fn)-6;
+    end
+    
+    
+    if ~isempty(del_elec)
+       Elec(del_elec,:) = [];
+       Ename(del_elec) = [];
+    end
+    
     fid = fopen(fiduciales);
     %fid = fopen('T1w_acpc_Head.fdp');
     str = fread(fid, '*char')';
@@ -78,7 +92,7 @@ fileID = fopen(filename,'w');
 %fileID = fopen('Name_XYZ.txt','w');
 
 
-for n=1:np % 
+for n=1:length(Ename) % 
 fprintf(fileID,'%s\t',Ename{n});    
 fprintf(fileID,'%3.3f\t%3.3f\t%3.3f\n',Elec(n,:));
 end
