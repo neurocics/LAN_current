@@ -1,7 +1,8 @@
 function stre = ls_lan(e,e2)
-% v0.2 
+% v0.3 
 % P Billeke
 
+try
 if nargin == 0 || isempty(e)
 stre = ls;
 else
@@ -9,6 +10,10 @@ stre = ls(e);
 if nargin<2
     e2=[];
 end
+end
+catch
+    stre = [];
+    return
 end
 
 stre(isspace(stre)) = ' ';

@@ -12,7 +12,7 @@ M = nan(size(C));
 for n = 1:numel(C);
    s = strrep(fun,'@','C{n}');
    try
-       paso = eval(s);
+       paso = [eval(s)];
     M(n) =  paso(1);
    catch
     warning(['cell index:' num2str(n)   ' with errors'])   

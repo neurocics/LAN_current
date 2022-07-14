@@ -40,7 +40,7 @@ getcfg(cfg, 'parametres','no')
 getcfg(cfg, 'names','no')%arreglar
 getcfg(cfg, 'divide',false)
 getcfg(cfg,'deltemp',true)
-ifepoch = getcfg(cfg, 'epoch',false);
+ifepoch = getcfg(cfg, 'epoch',true);
 delnoR = 0;
 if ischar(names) && strcmp(names,'no')% && divide, 
     names=[];

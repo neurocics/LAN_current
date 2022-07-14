@@ -534,7 +534,7 @@ if ifml
     RT.missest = missest;
     if exist('OTHERmiss','var')
         for vn = 1:size(OTHERmiss,2)
-            eval(['RT.OTHERmiss.' OTHERmiss.Properties.VariableNames{vn} ' = OTHERmiss{:,'  num2str(vn)   '};']);   
+            eval(['RT.OTHERmiss.' OTHERmiss.Properties.VariableNames{vn} ' = OTHERmiss{:,'  num2tsr(vn)   '};']);   
         end
     end
 else
@@ -553,11 +553,9 @@ RT.resp = resp;
 end
 RT.cfg = cfg; 
 RT.nblock = 1;
-    if exist('OTHERnomiss','var')
-        for vn = 1:size(OTHERnomiss,2)
-            eval(['RT.OTHER.' OTHERnomiss.Properties.VariableNames{vn} ' = OTHERnomiss{:,'  num2tsr(vn)   '};']);   
-        end
-    end
+try
+RT.OTHER = OTHERnomiss;
+end
 
 if ~ifmiss
     RT = miss2rt(RT);
