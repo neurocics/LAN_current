@@ -14,9 +14,8 @@ RT2.est = RT.missest;
 RT2.resp = ones(1,length(RT.misslaten))*-99;
 if isfield(RT,'OTHERmiss')
 RT2.OTHER = RT.OTHERmiss;
-RT2 =rt_merge(RT,RT2,1);
 end
-
+RT2 =rt_merge(RT,RT2,1);
 RT2.misslaten=[];
 RT2.missest=[];
 

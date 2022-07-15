@@ -555,7 +555,7 @@ RT.cfg = cfg;
 RT.nblock = 1;
     if exist('OTHERnomiss','var')
         for vn = 1:size(OTHERnomiss,2)
-            eval(['RT.OTHER.' OTHERnomiss.Properties.VariableNames{vn} ' = OTHERnomiss{:,'  num2tsr(vn)   '};']);   
+            eval(['RT.OTHER.' OTHERnomiss.Properties.VariableNames{vn} ' = OTHERnomiss{:,'  num2str(vn)   '};']);   
         end
     end
 
