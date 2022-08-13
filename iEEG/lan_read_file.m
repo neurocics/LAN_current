@@ -70,11 +70,11 @@ if ischar( EVENT(find(si,1)).value)
      RT.est(ifcellis(RT.label,cod{i})) = i; 
   end
 else
-%RT.est = ({EVENT(si).value});
-RT.est = ({EVENT.value});
+RT.est = ({EVENT(si).value});
+%RT.est = ({EVENT.value});
 end
-%RT.laten = 1000*(cell2mat({EVENT(si).sample})/HEADER.Fs);
-RT.laten = 1000*(cell2mat({EVENT.sample})/HEADER.Fs);
+RT.laten = 1000*(cell2mat({EVENT(si).sample})/HEADER.Fs);
+%RT.laten = 1000*(cell2mat({EVENT.sample})/HEADER.Fs);
 LAN.RT = rt_check(RT);
 catch
     disp('Not event')
