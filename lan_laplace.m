@@ -91,18 +91,18 @@ end
             M.theta = M.theta - 360; end; 
             %phi = 90 - (radius * 180);
         M.phi = cat(1,chanlocs(:).sph_phi);
-
+         Sy =1;Sx =1;
 
         M.xy(:,1) = (-cat(1,chanlocs(:).Y) - YCz)*Sy; % center Cz electrode
         M.xy(:,2) = (cat(1,chanlocs(:).X) - XCz)*Sx ; % center Cz electrode
         mm = max(max(abs(M.xy))); % 200
         M.xy = ((M.xy) ./ (2 * (mm))) + 0.5;	% for tranfor a unit sphere !!!! OJO !!!!
 
-        MapMontage(M)
-        pause
+       % MapMontage(M)
+       % pause
    % calculated matrix
    % see GetGH.m
-   % [G,H] = GetGH (M, m)
+    [G,H] = GetGH (M, 4);
   end
 %---%
 
