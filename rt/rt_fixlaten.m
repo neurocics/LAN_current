@@ -65,7 +65,7 @@ for i = 1:length(laten)-1
         p_delta(cc) = NaN;%delta;
         add_delta(cc) = NaN;%c_delta;
         
-       disp([ 'add event .. ' num2str(i) ' delat ' num2str(delta)  ' estim  '  num2str(RT.est(f+i)) ' <-- ' num2str(est(1+i))])
+       disp([ 'add event .. ' num2str(i) ' to' num2str(f+i)  ' delat ' num2str(delta)  ' estim  '  num2str(RT.est(f+i)) ' <-- ' num2str(est(1+i))])
        paso_laten(cc) = laten(1+i) - c_delta;
        paso_est(cc) = est(i+1);
        paso_rt(cc) = rt(i+1);

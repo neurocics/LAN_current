@@ -1022,6 +1022,7 @@ COMP_topocond
         uicontrol('Style','pushbutton','Position',[0,0,20,20],'String','E','Callback',{@editF})
         uicontrol('Style','pushbutton','Position',[0,20,20,20],'String','S','Callback',{@editF})
         uicontrol('Style','pushbutton','Position',[0,40,20,20],'String','C','Callback',{@editF})
+        uicontrol('Style','pushbutton','Position',[0,60,20,20],'String','Jet','Callback',{@editF})
 cc =0;
 for c = 1:length(condM)
     cc = cc +1;

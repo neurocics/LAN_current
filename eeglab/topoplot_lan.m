@@ -197,8 +197,10 @@ function [x,y,handle,Zi,grid,Xi,Yi] = topoplot(Values,loc_file,varargin)
 %
 %icadefs                 % read defaults MAXTOPOPLOTCHANS and DEFAULT_ELOC and BACKCOLOR
 if ~exist('BACKCOLOR')  % if icadefs.m does not define BACKCOLOR
-   BACKCOLOR = [.93 .96 1];  % EEGLAB standard
+   %BACKCOLOR = [.93 .96 1];  % EEGLAB standard
+   BACKCOLOR = [1 1 1];  % EEGLAB standard
 end
+BACKCOLOR = [1 1 1];
 whitebk = 'off';  % by default, make gridplot background color = EEGLAB screen background color
 
 plotgrid = 'off';
@@ -237,7 +239,7 @@ EFSIZE = get(0,'DefaultAxesFontSize'); % use current default fontsize for electr
 HLINEWIDTH = 1.7;         % default linewidth for head, nose, ears
 BLANKINGRINGWIDTH = .035;% width of the blanking ring 
 HEADRINGWIDTH    = .007;% width of the cartoon head ring
-SHADING = 'flat';       % default 'shading': flat|interp
+SHADING = 'interp';       % default 'shading': flat|interp
 shrinkfactor = [];      % shrink mode (dprecated)
 intrad       = [];      % default interpolation square is to outermost electrode (<=1.0)
 plotrad      = [];      % plotting radius ([] = auto, based on outermost channel location)
@@ -1596,7 +1598,7 @@ end;
 %%%%%%%%%%%%% Set EEGLAB background color to match head border %%%%%%%%%%%%%%%%%%%%%%%%
 %
 try, 
-  icadefs; 
+  %icadefs; 
   set(gcf, 'color', BACKCOLOR); 
   catch, 
 end; 
