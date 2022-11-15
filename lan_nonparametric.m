@@ -38,6 +38,7 @@ getcfg(cfg,'cortest',false)
 getcfg(cfg,'method','rank')
 getcfg(cfg,'paired',2)
 getcfg(cfg,'fast',1)
+getcfg(cfg,'displayt',1)
 texto = getcfg(cfg,'text','');
 if isempty(texto), texto = plus_text(); end
 
@@ -175,7 +176,7 @@ if paired
     for p = 1:size(diffd,1)
     %%%p=1 ; %%%% P 
     bar = bar_wait(p,size(diffd,1),'pre(Wt) pos( ) B(.) R(o)');
-              if ~isempty(bar)
+              if displayt && ~isempty(bar)
               texto = last_text(texto,bar,1);
               disp_lan(texto);
               end %%%
