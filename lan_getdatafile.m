@@ -1,7 +1,10 @@
 function DATA = lan_getdatafile(filenames,filepath,varname)
-% v.0.0.2
+% v.0.1
 % DATA = lan_getdatafile(filenames,filepath,varname)
 %
+% 15.08.2022
+% improve error in new MATLAB version 
+
 if nargin == 0
 help lan_getdatafile
     if strcmp(lanversion('t'),'devel')
@@ -30,6 +33,9 @@ else
     try
     eval(['load( ''-mat'' , ''' filepath '/' filenames ''' , ''' varname ''' );'])
     catch
+    try
+    eval(['load( ''-mat'' , ''' filenames ''' , ''' varname ''' );'])
+    catch
         try
         ee = findstr(filenames,'_');
         ee = ee(1)-1;
@@ -37,6 +43,7 @@ else
         catch
             eval(['load( ''-mat'' , ''./' filenames ''' , ''' varname ''' );']) 
         end
+    end
     end
     DATA = eval(varname);
 end
