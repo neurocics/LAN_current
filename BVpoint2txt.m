@@ -18,12 +18,13 @@ function BVpoint2txt(puntos,np,fiduciales,filename,elec_name,del_elec)
 % 02.06.2022
 
 if nargin == 1 && isstruct(puntos)
-    puntos          = getcfg(puntos,'elec_file');
-    fiduciales      = getcfg(puntos,'fidu_file');
-    np              = getcfg(puntos,'n_ele',[]);
-    filename        = getcfg(puntos,'filename','NAME_XYZ.txt');
-    elec_name       = getcfg(puntos,'elec_name',[]);
-    del_elec        = getcfg(puntos,'del_elec',[]);
+    cfg=puntos;
+    puntos          = getcfg(cfg,'elec_file');
+    fiduciales      = getcfg(cfg,'fidu_file');
+    np              = getcfg(cfg,'n_ele',[]);
+    filename        = getcfg(cfg,'filename','NAME_XYZ.txt');
+    elec_name       = getcfg(cfg,'elec_name',[]);
+    del_elec        = getcfg(cfg,'del_elec',[]);
 elseif nargin <6
     filename='NAME_XYZ.txt';
     del_elec=[];
