@@ -327,7 +327,7 @@ end
 
 LAN.data = DATA;
 fin = find(file=='.',1,'first')-1;
-if isempty(fin)
+if isempty(fin) || fin < 3
   LAN.name = file;
 else
   LAN.name = file(1:fin);  
