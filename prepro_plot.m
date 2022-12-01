@@ -1263,7 +1263,7 @@ end
                 Tm = timelan(LAN{ncd});
                 
                 % min time por trial with diferent duration 
-                min_p = min((LAN{ncd}.time(LAN{ncd}.accept,2) - LAN{ncd}.time(LAN{ncd}.accept,1) )* LAN{ncd}.srate);
+                min_p = fix(min((LAN{ncd}.time(LAN{ncd}.accept,2) - LAN{ncd}.time(LAN{ncd}.accept,1) )* LAN{ncd}.srate));
                 for  t =1:LAN{ncd}.trials
                     if LAN{ncd}.accept(t)
                     D{t} = D{t}(:,1:min_p);
