@@ -70,11 +70,12 @@ y = reshape(y,np,ns);
 for x = 1:nx
   if numel(varargin{x})==ns;
   ifuni(x) = true;
+  varargin{x} = varargin{x}(:)';
   elseif numel(varargin{x})==np*ns;
   varargin{x} = reshape(y,np,ns);
   ifuni(x) = false;
   else
-    error('dimension of xs')
+    error(['dimension of xs' num2str(x)])
   end
 end
 warning off

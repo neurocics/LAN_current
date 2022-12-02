@@ -649,12 +649,12 @@ function EEGplot(nt,Nlabels)
            if any(LAN{ncd}.tag.mat(i,cnt) == bad)
                paso = color;
                color = 'yellow';
-               if any(LAN{ncd}.tag.mat(i,cnt) == badA)&& any(LAN{ncd}.tag.mat(i,cnt) == badA)
+               if any(LAN{ncd}.tag.mat(i,cnt) == badA)%&& any(LAN{ncd}.tag.mat(i,cnt) == badA)
                    color=[1 0.25 0];
-               elseif any(LAN{ncd}.tag.mat(i,cnt) == badA)
+               elseif any(LAN{ncd}.tag.mat(i,cnt) == badO)
                    color=[1 0.5 0];
-              elseif any(LAN{ncd}.tag.mat(i,cnt) == badO)
-                   color=[0 0 0];    
+              %elseif any(LAN{ncd}.tag.mat(i,cnt) == badO)
+              %     color=[0 0 0];    
                end
            end
            end
