@@ -64,7 +64,7 @@ for i = 1:length(laten)-1
        paso_resp(cc) = RT.resp(f+i);
        paso_delta(cc) = delta;
        paso_fixed(cc) = 0;
-    elseif delta >= dw_delta% ||
+    else%if abs(delta) >= up_delta ||
         cambio(end+1) = cc;
         p_delta(cc) = NaN;%delta;
         add_delta(cc) = NaN;%c_delta;
@@ -128,7 +128,7 @@ end
 RT.latency = RT.laten;
 
 % fix me
-% RT = rmfield(RT,'good');
+RT = rmfield(RT,'good');
 RT = rt_check(RT);
 
 end
