@@ -1,6 +1,7 @@
 function stre = ls_lan(e,e2)
 % v0.3 
 % P Billeke
+% TAREA: HACERLO GEENRUICO PARA WINDOWS TAMBIEN 
 
 try
 if nargin == 0 || isempty(e)

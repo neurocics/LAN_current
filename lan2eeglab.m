@@ -1,10 +1,10 @@
 function EEG = lan2eeglab(LAN)
-% v.0.0.2
+% v.0.2
 % provisorio
 % para guarda en .set y hacer ica
 %
 
-% 10.01.2012
+% 12.12.2022
 
 EEG = lan_check(LAN);
 %EEG = LAN;
@@ -65,9 +65,10 @@ EEG = check(EEG,'icaact');
 EEG = check(EEG,'icaweights');
 EEG = check(EEG,'icasphere');
 EEG.pnts = length(EEG.data); % arreglar
-EEG.setname = []; 
-EEG.filename = []; 
-EEG.filepath =[];
+EEG.setname = ['LAN']; 
+EEG.filename = ['']; 
+EEG.filepath =[''];
+EEG = check(EEG,'epoch','LAN.accept');
 
 %EEG = lan_check(EEG)  
 
@@ -77,10 +78,14 @@ end
 
 
 
-function LAN1 = check(LAN2, field)
-LAN1 = LAN2;
-if ~isfield(LAN2,field)
-    uno = strrep('LAN1.x = [];','x',field);
+function LAN1 = check(LAN, field, val)
+if nargin<3
+    val='[]';
+end
+LAN1 = LAN;
+if ~isfield(LAN,field)
+    uno = strrep('LAN1.%x = %y;','%x',field);
+    uno = strrep(uno,'%y',val);
     eval(uno); clear uno;
 end
 end 

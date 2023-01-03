@@ -43,15 +43,18 @@ p_delta=0;
 cc = 0;
 fixed = 1;
 cambio=0;
-for i = 1:length(laten)-1  
+i=0;
+ic=0;
+while i<(length(laten) -ic-1)%for i = 1:length(laten)-1  
+    i=i+1;
     cc = cc +1;
     if length(RT.laten)==(f+i-1) % the case of the last event is missed;
     delta = dw_delta+1;    
     else
-    delta = RT.laten(f+i) - laten(1+i) - c_delta ;
+    delta = RT.laten(f+i) - laten(1+i+ic) - c_delta ;
     end
     
-    if (abs(delta) <= dw_delta)  && RT.est(f+i)==est(1+i)   || (any(i==force))
+    if (abs(delta) <= dw_delta)  && RT.est(f+i)==est(1+i+ic)   || (any(i==force))
         p_delta(cc) = delta;
         add_delta(cc) = c_delta;  
         
@@ -64,29 +67,56 @@ for i = 1:length(laten)-1
        paso_resp(cc) = RT.resp(f+i);
        paso_delta(cc) = delta;
        paso_fixed(cc) = 0;
-    elseif delta >= dw_delta% ||
+
+    elseif delta < (-1*dw_delta)
+       ic =ic-1;
+       %cc=cc-1;
+        p_delta(cc) = NaN;
+        add_delta(cc) = NaN;  
+%         
+%       %c_delta = c_delta + delta;
+        paso_laten(cc) = RT.laten(f+i);
+        paso_est(cc) = RT.est(f+i);
+        paso_rt(cc) = RT.rt(f+i);
+        paso_good(cc) = RT.good(f+i);
+        paso_resp(cc) = RT.resp(f+i);
+        paso_delta(cc) = delta;
+        paso_fixed(cc) = -1;
+
+        disp([ 'missed event .. ' num2str(i) ' to' num2str(f+i)  ' delat ' num2str(delta)  ' estim  '  num2str(RT.est(f+i)) ' --> ' num2str(est(1+i+ic))])
+      
+    %end
+
+
+
+
+
+
+    else%if delta > -1*dw_delta% ||
         cambio(end+1) = cc;
         p_delta(cc) = NaN;%delta;
         add_delta(cc) = NaN;%c_delta;
         
-       disp([ 'add event .. ' num2str(i) ' to' num2str(f+i)  ' delat ' num2str(delta)  ' estim  '  num2str(RT.est(f+i)) ' <-- ' num2str(est(1+i))])
-       paso_laten(cc) = laten(1+i) - c_delta;
-       paso_est(cc) = est(i+1);
-       paso_rt(cc) = rt(i+1);
-       paso_resp(cc) = resp(i+1);
-       paso_good(cc) = good(i+1);
+       paso_laten(cc) = laten(1+i+ic) - c_delta;
+       paso_est(cc) = est(i+1+ic);
+       paso_rt(cc) = rt(i+1+ic);
+       paso_resp(cc) = resp(i+1+ic);
+       paso_good(cc) = good(i+1+ic);
        paso_delta(cc) = delta;
        paso_fixed(cc) = 1;
        fixed(end+1) = cc;
        f = f -1;
+
+       disp([ 'add event .. ' num2str(i) ' to' num2str(f+i)  ' delat ' num2str(delta)  ' estim  '  num2str(RT.est(f+i)) ' <-- ' num2str(est(1+i+ic))])
+      
     %else
      %   warning('xxx')
     end
 end
 
 % new RT
-%getcfg(cfg,'f',1)
-fend = (f+i+1);
+e=getcfg(cfg,'f',1);
+fend = (f+i+e-1)+1;
 getcfg(cfg,'f',1)
 if isempty(RT.laten(fend:end))
 RT.laten = cat(2, RT.laten(1:f), paso_laten);
@@ -98,12 +128,12 @@ RT.OTHER.delta = cat(2, zeros(size(RT.resp(1:f))), paso_delta);
 RT.OTHER.fixed = cat(2, zeros(size(RT.resp(1:f))), paso_fixed);
 else
 RT.laten = cat(2, RT.laten(1:f), paso_laten,RT.laten(fend:end));
-RT.est = cat(2, RT.est(1:f), paso_est,RT.est(fend:end));
 RT.rt = cat(2, RT.rt(1:f), paso_rt,RT.rt(fend:end));
 RT.good = cat(2, RT.good(1:f), paso_good,RT.good(fend:end));
 RT.resp = cat(2, RT.resp(1:f), paso_resp,RT.resp(fend:end));  
 RT.OTHER.delta = cat(2, zeros(size(RT.est(1:f))), paso_delta,zeros(size(RT.est(fend:end))));
 RT.OTHER.fixed = cat(2, zeros(size(RT.est(1:f))), paso_fixed,zeros(size(RT.est(fend:end))));
+RT.est = cat(2, RT.est(1:f), paso_est,RT.est(fend:end));
 end
 
 if ifplot
