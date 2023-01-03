@@ -84,6 +84,7 @@ if nargin==2
    % ----- 
    % mark FALSE in the good parameter, if the event is in unselected areas
    SS = getcfg(cfg,'selected',[]);
+   try % avoid error when imaging proxewsing toolbox is not availabe %% FIXME!!!
    if ~isempty(SS)
      srate = getcfg(cfg,'srate');
      time = getcfg(cfg,'time');
@@ -99,6 +100,7 @@ if nargin==2
          RT.good((RT.laten>=pri)&(RT.laten<=ult)) = false;
      end
      end
+   end
    end
    
    
