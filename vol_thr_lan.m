@@ -1,4 +1,4 @@
-function LAN = vol_thr_lan(LAN,thr,tagname,elec)
+function LAN = vol_thr_lan(LAN,thr,z,tagname,elec)
 %       <*LAN)<
 %       v.0.2
 %
@@ -10,9 +10,12 @@ function LAN = vol_thr_lan(LAN,thr,tagname,elec)
 % Pablo Billeke
 %
 if nargin <3
-    tagname = 'bad';
+    ifz = strcmp(z,'z');
 end
 if nargin <4
+    tagname = 'bad';
+end
+if nargin <5
     elec = 1:LAN.nbchan;
 end
 fprintf( 'Voltage threshold \n')
@@ -54,11 +57,19 @@ c=0;
 
 tt = 1:LAN.trials;
 %tt(LAN.accept)=[];% no interpolar trial no aceptados
+if ifz
+    DATA = cat(2,LAN.data{LAN.accep});
+    zmean = mean(DATA,2);
+    zsd = sd(DATA,[],2);
+end
 
-for nt = tt;
+for nt = tt
     if isempty(LAN.data{nt}); continue;end
     for nch = elec% ONLY IN SELECTED ELECTRODES  1:LAN.nbchan 
         d = LAN.data{nt}(nch,:);
+        if ifz
+            d=(d-zmean)/zsd;
+        end
         %d = d - mean(d)
         if abs(max(d)-min(d))>thr
             LAN.tag.mat(nch,nt) = ntag;
