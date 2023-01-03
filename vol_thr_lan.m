@@ -39,7 +39,7 @@ end
             fprintf( '\n DONE \n')
 end
 
-function LAN = vol_thr_lan_str(LAN,thr,tagname,elec)
+function LAN = vol_thr_lan_str(LAN,thr,ifz,tagname,elec)
 
 %
 if isempty(LAN.tag.labels)
