@@ -60,7 +60,7 @@ c=0;
 tt = 1:LAN.trials;
 %tt(LAN.accept)=[];% no interpolar trial no aceptados
 if ifz
-    DATA = cat(2,LAN.data{LAN.accep});
+    DATA = cat(2,LAN.data{LAN.accept});
     zmean = mean(DATA,2);
     zsd = sd(DATA,[],2);
 end
