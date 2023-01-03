@@ -95,12 +95,12 @@ end
 
 
 %tt(LAN.accept)=[];% no evaluar trial no aceptados
-for nt = tt;
+for nt = tt
     
     for nch = 1:elec
         nfl= LAN.freq.fourierp.data(nch,t1:t2,nt); %data
         nf = nfl - LAN.freq.fourierp.mean(nch,t1:t2);%data-mean
-        nf = ((nf-(thr(1).*LAN.freq.fourierp.std(nch,t1:t2)))>0);
+        nf = ((nf-(thr(1).*LAN.freq.fourierp.std(nch,t1:t2)))>0) | ((nf+(thr(1).*LAN.freq.fourierp.std(nch,t1:t2)))<0);
             ...
             ...% + ((nf+thr(1).*LAN.freq.fourierp.std(nch,t1:t2))<0)...
             %+ (log10(nfl)>(thr(1).*LAN.freq.fourierp.lslog(nch,t1:t2)));...

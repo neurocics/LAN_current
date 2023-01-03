@@ -30,10 +30,10 @@ LAN = lan_check(LAN);
 
 if iscell(LAN)
     for lan =1:length(LAN)
-        LAN{lan} = vol_thr_lan_str(LAN{lan},thr,tagname,elec);
+        LAN{lan} = vol_thr_lan_str(LAN{lan},thr,ifz,tagname,elec);
     end
 else
-    LAN = vol_thr_lan_str(LAN,thr,tagname,elec);
+    LAN = vol_thr_lan_str(LAN,thr,ifz,tagname,elec);
 end
 
             fprintf( '\n DONE \n')
@@ -62,7 +62,7 @@ tt = 1:LAN.trials;
 if ifz
     DATA = cat(2,LAN.data{LAN.accept});
     zmean = mean(DATA,2);
-    zsd = sd(DATA,[],2);
+    zsd = std(DATA,[],2);
 end
 
 for nt = tt
@@ -70,10 +70,15 @@ for nt = tt
     for nch = elec% ONLY IN SELECTED ELECTRODES  1:LAN.nbchan 
         d = LAN.data{nt}(nch,:);
         if ifz
-            d=(d-zmean)/zsd;
+            d=(d-zmean(nch))./zsd(nch);
+            zd=any(abs(d)>(thr/2));
+        else
+            zd=0;
         end
         %d = d - mean(d)
-        if abs(max(d)-min(d))>thr
+
+
+        if (abs(max(d)-min(d))>thr) || zd
             LAN.tag.mat(nch,nt) = ntag;
             fprintf('o')
             c=c+1;
