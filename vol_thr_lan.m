@@ -10,6 +10,8 @@ function LAN = vol_thr_lan(LAN,thr,z,tagname,elec)
 % Pablo Billeke
 %
 if nargin <3
+    ifz=1
+else
     ifz = strcmp(z,'z');
 end
 if nargin <4
