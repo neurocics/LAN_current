@@ -38,6 +38,7 @@ function RT = rt_read(cfg,LAN)
 % Pablo Billeke
 % Francisco Zamorano
 
+
 % 18.05.2022  read port conflict in presentation 
 % 19.02.2022  Fix pauses in oresentation 
 % 29.08.2019  !!! Crucial fix for 'RT' case for sample rate other than 1000 !!!! 
@@ -65,7 +66,10 @@ end
 
 if isfield(cfg,'iflbc') 
     iflbc = cfg.iflbc;
-    if (iflbc~=0)&&(iflbc~=1)
+    if ischar(cfg.iflbc)
+        f_laten =  iflbc;
+        iflbc = true;
+    elseif (iflbc~=0)&&(iflbc~=1)
        f_laten =  iflbc; 
        iflbc = true;
     else
@@ -500,10 +504,12 @@ end
     rt = rt * unit;
     laten = laten * unit;
     tr_tt = tt *unit;
-    
+    % find(odel'==255,1)
 
+if ischar(f_laten)
+    lb = tr_tt(find(odel'==eval(f_laten),1));
 
-if (iflbc)&&(~f_laten)
+elseif (iflbc)&&(~f_laten)
     if sum(misslaten) >0
     lb = min(laten(1),misslaten(1));
     else

@@ -232,8 +232,8 @@ else
     LAN.cond = ['cond ' num2str(place) ];
 end
 
-if isfield(LAN,'name')
-   LAN.name = LAN.name;
+if isfield(LAN,'name') && isstring(LAN.name)
+   LAN.name = fix_filename(LAN.name,{'/','\'});
 else
     LAN.name = [ ' ' ];
 end

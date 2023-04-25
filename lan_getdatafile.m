@@ -1,9 +1,10 @@
 function DATA = lan_getdatafile(filenames,filepath,varname)
-% v.0.1
+% v.0.2
 % DATA = lan_getdatafile(filenames,filepath,varname)
 %
 % 15.08.2022
-% improve error in new MATLAB version 
+% improve error in new MATLAB version
+% improve seaerch for filena with extend path 
 
 if nargin == 0
 help lan_getdatafile
@@ -30,6 +31,9 @@ if iscell(filenames)
         DATA{i} = eval(vn);
     end
 else
+
+
+
     try
     eval(['load( ''-mat'' , ''' filepath '/' filenames ''' , ''' varname ''' );'])
     catch
@@ -41,7 +45,14 @@ else
         ee = ee(1)-1;
         eval(['load( ''-mat'' , ''./' filenames(1:ee) '/' filenames ''' , ''' varname ''' );']) 
         catch
+
+            try
             eval(['load( ''-mat'' , ''./' filenames ''' , ''' varname ''' );']) 
+            catch
+            eval(['load( ''-mat'' , ''./' fix_filename(filenames,{'/','\'}) ''' , ''' varname ''' );'])    
+            end
+           
+
         end
     end
     end

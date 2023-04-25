@@ -33,7 +33,7 @@ function LAN = lan_sync_net(LAN,cfg)
 if iscell(LAN)   
    funhandle = str2func(mfilename); 
    for lan = 1:lenght(LAN)
-   LAN{lan}  = funhandle(LAN{lan},varargin{2:nargin});
+   %LAN{lan}  = funhandle(LAN{lan},varargin{2:nargin});
    end
    return
 end
@@ -110,7 +110,7 @@ else
 end
    
 
-if ~strcmp(across,'trials')
+if ~strcmp(across,'trials') && ~strcmp(across,'electrodes') 
     error([' across: ' across  ': This Opticion no work yet'])
 end
     
@@ -162,9 +162,39 @@ for t = 1:N
         if ~ifdiv
         [Rho Phi] = waveletSpectro( MatSig, LAN.srate, cfg.frange, ResHz, nstep);
         if ifpha
-                Phi=cos(Phi)+sqrt(-1)*sin(Phi);
+
+         switch across
+                            case 'trials'
+                                nMean=N;
+                               % for t = 1:N
+                                %    fprintf([ num2str(t) '.'])
+                                %    if mod(t,20)==0, fprintf('\n'); end
+                                    if t == 1
+                                    [CumMatdif, ParElec] = difphaser3(Phi,1);   
+                                    else
+                                    [Matdif, ParElec] = difphaser3(Phi,1);
+                                    CumMatdif = CumMatdif + Matdif;    
+                                    end
+                                %end  
+                            case 'electrodes'
+                                nMean=size(Phi,1)
+                               % for t = 1:nMean
+                                %    fprintf([ num2str(t) '.'])
+                                %    if mod(t,20)==0, fprintf('\n'); end
+                                    if t == 1
+                                    [CumMatdif, ParElec] = difphaser3(Phi,1);
+                                    CumMatdif = sum(CumMatdif,1);
+                                    else
+                                    [Matdif, ParElec] = difphaser3(Phi,1);
+                                    CumMatdif = cat(4,CumMatdif,sum(Matdif,1));    
+                                    end
+                                %end     
+                        end
+
+
+                %Phi=cos(Phi)+sqrt(-1)*sin(Phi);
                 %calcula la matriz de diferencias de fase a partir de la matriz de fases
-                [CumMatdif, ParElec] = difphaser3(Phi,1);
+                %[CumMatdif, ParElec] = difphaser3(Phi,1);
          end       
                 %power
                  CumRho = Rho;
@@ -179,9 +209,40 @@ for t = 1:N
         [CumRho, Phi] = waveletSpectro( MatSig, LAN.srate, cfg.frange, ResHz, nstep);
         Phi=cos(Phi)+sqrt(-1)*sin(Phi);
         if ifpha
+
+                        switch across
+                            case 'trials'
+                                %nMean=N;
+                                %for t = 1:N
+                                    %fprintf([ num2str(t) '.'])
+                                    %if mod(t,20)==0, fprintf('\n'); end
+                                    if t == 1
+                                    [CumMatdif, ParElec] = difphaser3(Phi,1);   
+                                    else
+                                    [Matdif, ParElec] = difphaser3(Phi,1);
+                                    CumMatdif = CumMatdif + Matdif;    
+                                    end
+                                %end  
+                            case 'electrodes'
+                               % nMean=size(Phi,1);
+                                %for t = 1:nMean
+                                    %fprintf([ num2str(t) '.'])
+                                    %if mod(t,20)==0, fprintf('\n'); end
+                                    if t == 1
+                                    [CumMatdif, ParElec] = difphaser3(Phi,1);
+                                    CumMatdif = sum(CumMatdif,1);
+                                    else
+                                    [Matdif, ParElec] = difphaser3(Phi,1);
+                                    CumMatdif = cat(4,CumMatdif,sum(Matdif,1));   
+                                    end
+                                %end     
+                        end
+
+
+
             %calcula la matriz de diferencias de fase a partir de la matriz de fases
-            [Matdif, ParElec] = difphaser3(Phi,1);
-            CumMatdif = CumMatdif + Matdif;
+           % [Matdif, ParElec] = difphaser3(Phi,1);
+            %CumMatdif = CumMatdif + Matdif;
             %figure, imagesc(abs(squeeze(CumMatdif(1,:,:)))'/N); pause
             end
         %power
@@ -245,23 +306,42 @@ end
                    end 
                    clear Phi Pho
                    
-                elseif ifreduce
+            elseif ifreduce
                 % phase
                   Phi = angle(FF);
                   clear FF
                   Phi=cos(Phi)+sqrt(-1)*sin(Phi);
                 % per trials
                         if ifpha
-                        for t = 1:N
-                            fprintf([ num2str(t) '.'])
-                            if mod(t,20)==0, fprintf('\n'); end
-                            if t == 1
-                            [CumMatdif, ParElec] = difphaser3(Phi(:,:,:,t),1);   
-                            else
-                            [Matdif, ParElec] = difphaser3(Phi(:,:,:,t),1);
-                            CumMatdif = CumMatdif + Matdif;    
-                            end
-                        end                    
+                        switch across
+                            case 'trials'
+                                nMean=N;
+                                for t = 1:N
+                                    fprintf([ num2str(t) '.'])
+                                    if mod(t,20)==0, fprintf('\n'); end
+                                    if t == 1
+                                    [CumMatdif, ParElec] = difphaser3(Phi(:,:,:,t),1);   
+                                    else
+                                    [Matdif, ParElec] = difphaser3(Phi(:,:,:,t),1);
+                                    CumMatdif = CumMatdif + Matdif;    
+                                    end
+                                end  
+                            case 'electrodes'
+                                nMean=size(Phi,1)
+                                for t = 1:nMean
+                                    fprintf([ num2str(t) '.'])
+                                    if mod(t,20)==0, fprintf('\n'); end
+                                    if t == 1
+                                    [CumMatdif, ParElec] = difphaser3(Phi(:,:,:,t),1);
+                                    CumMatdif = sum(CumMatdif,1)
+                                    else
+                                    [Matdif, ParElec] = difphaser3(Phi(:,:,:,t),1);
+                                    CumMatdif = cat(4,CumMatdif,Matdif);    
+                                    end
+                                end     
+                        end
+
+
                         end
                 end
 
@@ -287,7 +367,7 @@ if iscell(CumMatdif)
        LAN.SYNC.B{nc} = abs(CumMatdif{nd}) / length(ndiv{nd}(1):ndiv{nd}(end)) ; 
     end
 else
-LAN.SYNC.B = abs(CumMatdif)/N;
+LAN.SYNC.B = abs(CumMatdif)/nMean;
 end
 LAN.SYNC.parelec = ParElec;
 end

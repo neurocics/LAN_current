@@ -981,7 +981,7 @@ if n
                                     met);   
           end
          else
-     ndatan{congM(c),condM(c)}(:,:,:,s) = normal_z((ndata{congM(c),condM(c)}(freq,:,:,s)),[],met);
+     %ndatan{congM(c),condM(c)}(:,:,:,s) = normal_z((ndata{congM(c),condM(c)}(freq,:,:,s)),[],met);
          end
   end
 
