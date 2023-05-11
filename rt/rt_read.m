@@ -78,6 +78,7 @@ if isfield(cfg,'iflbc')
 else
     iflbc = 0;
     cfg.iflbc = 0;
+    f_laten = false; 
 end
 
 

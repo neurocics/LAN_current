@@ -68,7 +68,7 @@ while i<(length(laten) -ic-1)%for i = 1:length(laten)-1
        paso_delta(cc) = delta;
        paso_fixed(cc) = 0;
 
-    elseif delta < (-1*dw_delta)
+    elseif delta < (-1*dw_delta) && 0 %%%% 
        ic =ic-1;
        %cc=cc-1;
         p_delta(cc) = NaN;
