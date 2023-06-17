@@ -1,6 +1,6 @@
 function LAN = vol_thr_lan(LAN,thr,type,tagname,elec)
 %       <*LAN)<
-%       v.1
+%       v.1.1
 %
 %       Detect voltange variations, in voltages, zscore, or corre
 %   thr :    threshold 
@@ -8,6 +8,8 @@ function LAN = vol_thr_lan(LAN,thr,type,tagname,elec)
 %            z : voltage (zscore)
 %            c : between-electrode correlation (zscore)
 %   
+% 17.06.2023 fixed positive threshold for zcore and negative threshold for
+%             z-coor
 % 15.06.2023 fix zscore threshold and add 
 %                corr threshold (decrease of increas corretion between electrodes in z-score)
 % 21.03.2022 fix empty trials 
@@ -95,9 +97,9 @@ for nt = tt
         elseif ifc 
             zd=0;
             vd=0;
-            zc=any(abs(zsccorr(nch,nt))>(thr));            
+            zc=any(-1*(zsccorr(nch,nt))>(thr));            
         else
-            vd=(abs(dt(nch,nt))>thr);
+            vd=((dt(nch,nt))>thr);
             zd=0;
             zc=0;
         end
