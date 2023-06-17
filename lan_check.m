@@ -13,6 +13,7 @@ function [LAN] = lan_check(LAN,op,place)
 %
 % Pablo Billeke
 
+% 17.06.2023     fix bag in LAN.name check 
 % 25.07.2018     fix bag with tag
 % 07.01.2015     fix empty end row in electrodemat matrix
 % 04.06.2014     revisar compatimbilidad para la tercera columna del .time
@@ -232,7 +233,7 @@ else
     LAN.cond = ['cond ' num2str(place) ];
 end
 
-if isfield(LAN,'name') && isstring(LAN.name)
+if isfield(LAN,'name') && (isstring(LAN.name) || ischar(LAN.name) );
    LAN.name = fix_filename(LAN.name,{'/','\'});
 else
     LAN.name = [ ' ' ];
