@@ -1,36 +1,61 @@
 function RT = rt_read(cfg,LAN)
-%     v.0.4
+%     v.1
 %     <*LAN)<|
 % Read event file for reaction time analysis and modeling
 %
 %  RT = rt_read(cfg)
 %
-% cfg.filename =       'nombredearchivo.log'
-% cfg.type = 'presentation' 'neuroscan' 'pos' 'RT'
-%            %%% si se decea evaluar respuestas correctas
-% cfg.delim =      [est, resp,resp,resp;
-%                          est, resp,resp,-99]  %% matriz con estimulos
-%                                        %%   y respuestas  para cada estimulo
-%                                        %%   -99 se ocupa para cuadrar las
-%                                        %%   matricez, 
-%           %%% si no se desea evaluar respuestas correctas
+%             ::  file or variable name where the data are. 
+% cfg.filename =       'nombredearchivo.log' 
+%
+%             ::  Format
+% cfg.type = 'presentation' --> .log  
+%            'neuroscan'    --> .ev2
+%            'pos'          --> .pos micromed
+%            'RT'           -->  RT structure LAN (variable in matlab)
+%            'table'        -->  Generic Table in MATLAB (variable in matlab)
+%
+%             :: stimuli, numeric only !!!
 % cfg.est = [est1,est2,...]
+%
+%             :: responses for RT calcualtion, numeric only !!!
 % cfg.resp = [resp1, resp2, ...]
+%
+%             ::  if TRUE, find estimuli for the corresponding response 
 % cfg.invert = false 
 %
+%              :: where (with which stimuli) stop to find resposnes ,
 % cfg.stop =        % distarctor, termian el tiempo de respuesta
+%
+%              ::  response window 
 % cfg.rw = []       %   (ventada de rerspuestas, en cfg.unit)(for TR in MS!!!)
-% cfg.iflbc =       % partir las latencia del priemr estimulo contado como cero.
-                    % 1: primer estimulo (de los definidos en cfg.est)
-                    % 2: segundo estimulo (de los definidos en cfg.est)
-                    % -1 primer estimulo encontrados (incluifos los no definidos en cfg.est)
+%
+%               :: correct for biseline 
+% cfg.iflbc =       %  //partir las latencia del primer estimulo contado como cero.
+                    % 1: the fisrt stimulus (in the list cfg.est) is the zero // primer estimulo (de los definidos en cfg.est)
+                    % 2: the second stimulus is the zero //segundo estimulo (de los definidos en cfg.est)
+                    % -1 the fisrt stimulus in the data file or varibale is the zero //primer estimulo encontrados (incluifos los no definidos en cfg.est)
+%
+%            :: unit for latency and RT
 % cfg.unit = 'ms'   %% unidades 's'
+%
+%            :: include the miss respnses in the vector 
 % cfg.miss=1;       % no separa los miss
+%
 %
 % Speficit option
 % - For Neuroscan ev2
 %   cfg.srate = 1000  % sample rate of date
 %   cfg.ifr   = false % If responces are in diferente column, for default false
+% 
+% old (deprecate) options
+%            %%% si se decea evaluar respuestas correctas
+% cfg.delim =      [est, resp,resp,resp;
+%                   est, resp,resp,-99]  %% matriz con estimulos
+%                                        %%   y respuestas  para cada estimulo
+%                                        %%   -99 se ocupa para cuadrar las
+%                                        %%   matricez, 
+%
 %
 % this function replace older functions:
 % see also RT_READ_EV2 RT_READ_PRESENTATION
@@ -38,7 +63,8 @@ function RT = rt_read(cfg,LAN)
 % Pablo Billeke
 % Francisco Zamorano
 
-
+% 19.06.2023 add option to to in filename the name of the variable in WS 
+% 01.01.2023 'table' type
 % 18.05.2022  read port conflict in presentation 
 % 19.02.2022  Fix pauses in oresentation 
 % 29.08.2019  !!! Crucial fix for 'RT' case for sample rate other than 1000 !!!! 
@@ -250,6 +276,10 @@ switch cfg.type
         %data(ci,:)
     %-:% LAN, Rtstructure   
     case {'RT','rt'}
+        if ~ isfield(cfg,'RT') &&  isfield(cfg,'filename') 
+            cfg.RT = evalin(cfg.filename);
+        end
+
         data = [ cfg.RT.est(:)  cfg.RT.laten(:)  cfg.RT.resp(:)  ] ;
         ne=1;
         nt=2;
@@ -267,7 +297,9 @@ switch cfg.type
         end
     %-:% presentation, file *.log 
     case {'Table','table'}
-        
+        if ~ isfield(cfg,'table') &&  isfield(cfg,'filename') 
+            cfg.table = evalin(cfg.filename);
+        end
             
         data = [ cfg.table{:,c_est}  cfg.table{:,c_time}  cfg.table{:,c_est}  ] ;
         ne=1;
