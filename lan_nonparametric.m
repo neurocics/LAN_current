@@ -45,8 +45,8 @@ if isempty(texto), texto = plus_text(); end
         if paired == 2 & cortest==0
            if length(data)==1
                paired=true;
-           elseif length(data)==1;
-               paired=1;
+           %elseif length(data)==1
+           %    paired=1;
            elseif ~(any(size(data{1})~=size(data{2})))
                paired=true;
            else

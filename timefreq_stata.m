@@ -1,7 +1,7 @@
 function GLAN = timefreq_stata(GLAN,cfg)
 %           <*LAN)<]
 %  
-% v.0.9
+% v.1
 % REALIZA ESTADISTICA NOPARAMETRICA A TRIEMP-FRECUENCIA
 % cfg.
 %  subject  =   [{'ID11' ,'ID12' , ...} , {'ID21' , 'ID22' , ...} , ... ]
@@ -43,6 +43,7 @@ function GLAN = timefreq_stata(GLAN,cfg)
 %  Rodrigo Henriquez
 %  Francisco Zamorano
 
+% 10.07.2023 (PB) fix time in models
 % 28.04.2020 (PB) fix an error in permutation test por paired data with null/permute  models! 
 % 08.07.2019 (PB) improving multiple comparison correction for cluters
 %                 paired samples and null/permute  models!
@@ -575,12 +576,22 @@ end
         elseif isstruct(LAN) && (isfield(LAN,'conditions') || ifmodel  )
             
             if isempty(range)
+                if ifmodel && isfield(LAN.freq.model,'freq')
+                fr = 1:length(LAN.freq.model.freq);
+                else
                 fr = 1:length(LAN.freq.freq);
+                end
             else % 
                 try
+                if ifmodel && isfield(LAN.freq.model,'freq')
+                fr(1) = find_approx(LAN.freq.model.freq,range(1)) ;  
+                fr(2) = find_approx(LAN.freq.model.freq,range(end)) ;  
+                fr = fr(1):fr(2);
+                else
                 fr(1) = find_approx(LAN.freq.freq,range(1)) ;  
                 fr(2) = find_approx(LAN.freq.freq,range(end)) ;  
                 fr = fr(1):fr(2);
+                end
                 catch
                 fr = range(1):range(2);    
                 end
@@ -718,10 +729,20 @@ end
                         GLAN.timefreq.freq = range; 
                     end
                 else
-                    GLAN.timefreq.freq = LAN.freq.freq;    
+                        if ifmodel && isfield(LAN.freq.model,'freq')   
+                        GLAN.timefreq.freq = LAN.freq.model.freq;
+                        else
+                        GLAN.timefreq.freq = LAN.freq.freq;
+                        end    
+                    
                 end
                 try
+                if ifmodel && isfield(LAN.freq.model,'time')   
+                GLAN.timefreq.time = LAN.freq.model.time;
+                else
                 GLAN.timefreq.time = LAN.freq.time;
+                end    
+                
                 end
                 %GLAN.timefreq.cfg = cfg;
                 try
