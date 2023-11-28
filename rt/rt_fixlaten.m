@@ -24,6 +24,7 @@ resp = RTfix.resp;
 rt = RTfix.rt;
 good = RTfix.good;
 else
+getcfg(cfg,'bi')     
 getcfg(cfg,'laten') 
 getcfg(cfg,'rt') 
 getcfg(cfg,'est') 

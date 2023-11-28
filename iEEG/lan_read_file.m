@@ -21,7 +21,7 @@ function [LAN] = lan_read_file(filename,type)
 %  30.08.2012
   
 
-if nargin == 0
+if nargin == 0 | isempty(filename)
     [file, path] = uigetfile('*.*', 'import file using IO');
     if isequal(file,0) || isequal(path,0)
                     disp('User selected Cancel')
