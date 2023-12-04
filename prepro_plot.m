@@ -1,4 +1,3 @@
-
 function prepro_plot(LAN)
 %         v.0.5
 %
@@ -9,7 +8,7 @@ function prepro_plot(LAN)
 %  See Also VOL_THR_LAN , LAN_INTERP , FFTAMP_THR_LAN
 %
 %  Pablo Billeke
-%  18.04.2022 8PB) Bug ICA visualization with empty trials
+%  18.04.2022 (PB) Bug ICA visualization with empty trials
 %  22.03.2022 (PB) Bug ICA for a only EEG channels
 %  27.02.2022 (PB) fix n_detec option  
 %  27.08.2021 (PB) improbe ICA components visualization 
@@ -451,7 +450,12 @@ uicontrol('Parent',paCom ,'Units','normalized','Style','text','String','Componen
           'Position',[0.01,0.25,0.3,0.2]...%'BackgroundColor',cf,'ForegroundColor',fc
            );        
 global compE     
-compE = uicontrol('Parent',paCom ,'Units','normalized','Style','Edit','String','',...
+if isfield(LAN{ncd}, 'ica_del')
+    ww=[ num2str(sort(LAN{ncd}.ica_del)) ];
+else
+    ww='';
+end
+compE = uicontrol('Parent',paCom ,'Units','normalized','Style','Edit','String',ww,...
     'BackgroundColor',bc,'ForegroundColor',fc,...
           'Position',[0.31,0.25,0.3,0.2]...%'BackgroundColor',cf,'ForegroundColor',fc
            ); 
@@ -1182,7 +1186,7 @@ end
                 set(compE,'String', [ get(compE,'String') ' ' num2str(ncomp) ]);
                 set(b,'BackgroundColor','red') 
             else
-                Sel = str2double(get(compE,'String'));
+                Sel = eval([ '[' get(compE,'String') ']' ]);
                 Sel(Sel==ncomp) = [];
                 set(compE,'String', num2str(Sel));
                 set(b,'BackgroundColor','white') 
@@ -1347,7 +1351,7 @@ end
           end
             ind_x = eval([ '[' get( compE, 'String') '];']);
             LAN{ncd} = lan_rm_chan(LAN{ncd}, ind_x,'ica');
-            set(compE,'String',[])
+            set(compE,'String',['[' num2str(sort(LAN{ncd}.ica_del)) ']'])
           EEGplot(cnt)
     %Nlabels 
     %

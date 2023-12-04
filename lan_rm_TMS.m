@@ -1,5 +1,5 @@
 function LAN = lan_rm_TMS(LAN,cfg)
-%  v.0.4 en prueba 
+%  v.0.5 en prueba 
 %
 % cfg.events  = [x1 x2 ... ] % evente labels that indicated TMS pusle
 % cfg.times  = [s1 s2]      % time to interpolated betweeen TMS pulse  
@@ -7,6 +7,13 @@ function LAN = lan_rm_TMS(LAN,cfg)
 % cfg.edge = s3;
 % cfg.time_lim = s4;         % limit of time to the segmetation, that is, if
 %                             there no n pulse in s4 seg,  cut the segemtation with less that n pulses  
+%
+%
+%
+% 27.10.2023 (PB) fix noise extraction errors.
+
+
+
 
 EV = getcfg(cfg,'events');     % EV = find(ifcellis(LAN.RT.OTHER.names,{'S 80','S 81','S 82','S 83','S 84'}));
 
@@ -92,22 +99,25 @@ nfix=0;
          tmp =  fix(    LAN.RT.laten(EV(evs_l-(nnpulse-1))).*(LAN.srate/1000)  - edge  ): fix((LAN.RT.laten(evs).*(LAN.srate/1000)+edge));
          
          if ifnoise
-             tmp_noise =  data(fix(    LAN.RT.laten(EV(evs_l-(nnpulse-1))).*(LAN.srate/1000)  - edge - noise_time ) :  fix(    LAN.RT.laten(EV(evs_l-(nnpulse-1))).*(LAN.srate/1000)  - edge  ));
+             tmp_noise =  data(fix(    LAN.RT.laten(EV(evs_l-(nnpulse-1))).*(LAN.srate/1000)  - edge - noise_time ) :  fix(    LAN.RT.laten(EV(evs_l-(nnpulse-1))).*(LAN.srate/1000)  + edge - noise_time ));
              tmp_noise_ori = tmp_noise;
              nan_laps = abs(diff(laten_r));
              noise_laps_l =fix((length(tmp_noise) + nan_laps)/(npulse+1));
              for np =  1:npulse
                 tmp_noise(fix(noise_laps_l*np):fix(noise_laps_l*np+nan_laps-1))=nan;
              end 
+             %for noise segment less that oririnal TMS periord  
+             tmp_noise = tmp_noise(1:numel(tmp_noise_ori));
              ind_nan = isnan(tmp_noise);
              tmp_noise = interpolate_nans(tmp_noise) - tmp_noise_ori;
              tmp_noise = tmp_noise(ind_nan);
          end 
-         
+
+
+
          
          dt = data(tmp);
-         
-         
+
          if seg
          PARAica{n_ica}(e,:) = dt(~isnan(dt));
          end
@@ -117,9 +127,11 @@ nfix=0;
          if rm
              ind_nan = isnan(dt);    
              dt = interpolate_nans(dt);
-             tmp_noise = [tmp_noise tmp_noise];
+
              if ifnoise
-                 dt(ind_nan) = dt(ind_nan) + tmp_noise(1:sum(ind_nan));
+                nr = ceil(numel(ind_nan) / numel(tmp_noise));
+                tmp_noise = repmat(tmp_noise,[1,nr]);
+                dt(ind_nan) = dt(ind_nan) + tmp_noise(1:sum(ind_nan));
              end
          end
          

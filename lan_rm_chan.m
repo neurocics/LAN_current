@@ -17,6 +17,7 @@ end
 
 
 if abs(ica)
+    ind = sort(ind);
     if iscell(LAN)
        for lan=1:length(LAN)
            LAN{lan} = lan_rm_chan(LAN{lan}, ind, ica);
@@ -28,7 +29,7 @@ if abs(ica)
         W = (LAN.ica_weights*LAN.ica_sphere);
         
         if isfield(LAN,'ica_del_comp')
-            added=0; % fix  me!!!
+            added=1; % fix  me!!!
         else
             added=0;
         end
@@ -36,26 +37,37 @@ if abs(ica)
         
         for t = 1:LAN.trials;
             if ~isempty(LAN.data{t})
+            if added
             data= LAN.data{t}(LAN.ica_select,:);
+            compr=W*data;
+            compr(LAN.ica_del,:) = LAN.ica_del_comp{t};
+            data = pinv(W)*compr;
+            else
+            data= LAN.data{t}(LAN.ica_select,:);
+            end
+
+
+            
             data = W*data;
             comp=data(ind,:);
             data(ind,:) = 0;
             data = pinv(W)*data;
             LAN.data{t}(LAN.ica_select,:) = data;
-            if added
-            LAN.ica_del_comp{t}= [LAN.ica_del_comp{t} ; comp] ;
-            else
+            %if added
+
+            %LAN.ica_del_comp{t}= [LAN.ica_del_comp{t} ; comp] ;
+            %else
             LAN.ica_del_comp{t}=comp;   
-            end
+            %end
             end
         end
     
     end
-    if isfield(LAN,'ica_del')
-    LAN.ica_del = ([ LAN.ica_del  ind ]);    
-    else
+    %if isfield(LAN,'ica_del')
+    %LAN.ica_del = ([ LAN.ica_del  ind ]);    
+    %else
     LAN.ica_del = ind;
-    end
+    %end
 else
 
     LAN = electrode_lan(LAN,ind);
