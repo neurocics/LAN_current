@@ -1,4 +1,4 @@
-function [imp] = BA2json(cfg) 
+function [imp_i] = BA2json(cfg) 
 %    <*LAN)<] 
 %    v.0.1
 %
@@ -7,7 +7,7 @@ function [imp] = BA2json(cfg)
 % [imp]         aditional imput for impedance to bluid _electrode.tsv (see BVpoint2txt) 
 %  BA2json(cfg)
 % cfg.
-%     filename  =  'NAME_XYZ.txt'
+%     filename  =  'sujeto.eeg'
 %     elec_name  = {'Cz', ...} default = [];
 %     elec_type = {'EEG' , ....}
 %
@@ -19,7 +19,7 @@ if nargin == 1 && isstruct(cfg)
 
     % file nams
     filename        = getcfg(cfg,'filename','');
-    if empty(filename)
+    if isempty(filename)
         filename = ls('*.eeg');
         if filename(end)~='g';filename(end)=[];end
     end
@@ -72,24 +72,32 @@ end
 
 % write _event.tsv
   fileID_event = fopen([filename '_event.tsv'],'w');  
-  fprintf(fileID_event,'%s','onset\tduration\tvalue\tstim_file\n')
+  fprintf(fileID_event,'%s \t','onset')
+  fprintf(fileID_event,'%s \t','duration')
+  fprintf(fileID_event,'%s \t','value')
+  fprintf(fileID_event,'%s \n','stim_file')
+ 
   for t =1:length(EVENT)
-      fprintf(fileID_event,'%3.3f\t',[EVENT(t).sample/vhdr.Fs]);
-      fprintf(fileID_event,'%3.3f\t',EVENT(t).duration);
-      fprintf(fileID_event,'%s\t',[EVENT(t).value]);
-      fprintf(fileID_event,'%s\t','n/a');
+      fprintf(fileID_event,'%3.4f \t',[EVENT(t).sample/vhdr.Fs]);
+      fprintf(fileID_event,'%3.1f \t',EVENT(t).duration);
+      fprintf(fileID_event,'%s \t',[EVENT(t).value]);
+      fprintf(fileID_event,'%s \n','n/a');
   end
   fclose(fileID_event)
 
   % write _channel.tsv
   fileID_chan = fopen([filename '_chan.tsv'],'w');  
-  fprintf(fileID_chan,'%s','name\ttype\tunit\tstatu\status_description')
+  fprintf(fileID_chan,'%s \t','name')
+  fprintf(fileID_chan,'%s \t','type')
+  fprintf(fileID_chan,'%s \t','unit')
+  fprintf(fileID_chan,'%s \t','status')
+  fprintf(fileID_chan,'%s \n','status_description')
   for e =1:length(names_i)
 
-      fprintf(fileID_chan,'%s\t',name_i{e});
+      fprintf(fileID_chan,'%s\t',names_i{e});
       fprintf(fileID_chan,'%s\t',type_i{e});
       fprintf(fileID_chan,'%s\t','microV');
-      if isempty(str2num(imp_i))
+      if isempty(str2num(imp_i{e}))
       fprintf(fileID_chan,'%s\t','bad');
       fprintf(fileID_chan,'%s\n','high impedance');
       else
