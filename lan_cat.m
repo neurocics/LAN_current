@@ -10,8 +10,6 @@ if  LAN.trials == 1
 end
 
 % "selected"  field  
-
-%newdata{1}     = LAN.data{1};
 newselected{1} = LAN.selected{1};
 newselected{1}(end)=0; % deja el ultimo punto de tiempo no selecionado para 
                        % marcar las descontinuidades
@@ -19,14 +17,13 @@ for t = 2:LAN.trials
  newselected{t} = LAN.selected{t};
  newselected{t}(end)=0; % deja el ultimo punto de tiempo no selecionado para 
 end
-LAN.selected = cat(2,newselected{:});
+LAN.selected{1} = cat(2,newselected{:});
 
 
 
 % "RT"  field  
-
 if isfield(LAN,'RT')
-    if numel(LAN.RT.laten)==LAN.trial    
+    if numel(LAN.RT.laten)==LAN.trials    
        delay = (LAN.time(:,2)-LAN.time(:,1))';
        delay = cumsum(delay);
        LAN.RT.laten = LAN.RT.laten + [ 0 delay(1:end-1)];
@@ -36,11 +33,11 @@ if isfield(LAN,'RT')
     end
 end
 
-
+% "trials" field
+LAN.trials=1;
 
 % "DATA" field
-LAN.trials=1;
-LAN.data = cat(2,LAN.data{:});
+LAN.data = {cat(2,LAN.data{:})};
 
 
 LAN = lan_check(LAN);

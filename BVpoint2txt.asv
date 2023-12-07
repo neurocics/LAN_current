@@ -36,7 +36,7 @@ if nargin == 1 && isstruct(puntos)
     np              = getcfg(cfg,'n_ele',[]);
     filename        = getcfg(cfg,'filename','NAME_XYZ.txt');
     elec_name       = getcfg(cfg,'elec_name',[]);
-    elec_imp        = getcfg(cfg,'elec_imp',[]);
+    elec_imp       = getcfg(cfg,'elec_imp',[]);
     del_elec        = getcfg(cfg,'del_elec',[]);
 elseif nargin <6
     filename='NAME_XYZ';
@@ -152,9 +152,9 @@ fprintf(fileID_elecjson,'%3.3f\t%3.3f\t%3.3f\t',Elec(n,:));
 if isempty(elec_imp)
 fprintf(fileID_elecjson,'%s','<10\n');
 elseif numel(elec_imp) > n
-fprintf(fileID_elecjson,'%s','<10\n');    
+     
 else
-fprintf(fileID_elecjson,'%3.3f\n',elec_imp(n));   
+fprintf(fileID_elecjson,'%3.3f\t',elec_imp(n));   
 end
 fclose(fileID_elecjson);
 end
