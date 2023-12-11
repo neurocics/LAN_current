@@ -34,7 +34,7 @@ end
     
      lines = readlines([filename '.vhdr']);
      imp_ind = find(contains(lines,'Impedance [kOhm] at','IgnoreCase',true));
-     lines = lines(imp_ind+1:end);
+     lines = lines(imp_ind(end)+1:end);
      for e =1:length(lines)% e=01
          paso=char(lines(e));
          if numel(paso)>0
