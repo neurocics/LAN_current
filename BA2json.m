@@ -1,4 +1,4 @@
-function [imp_i] = BA2json(cfg) 
+function [imp_i RT] = BA2json(cfg) 
 %    <*LAN)<] 
 %    v.0.1
 %
@@ -26,6 +26,7 @@ if nargin == 1 && isstruct(cfg)
     filename = strrep(filename,'.eeg','');
     elec_name  = getcfg(cfg,'elec_name',[]);
     elec_type  = getcfg(cfg,'elec_type',[]);
+    ifrt = getcfg(cfg,'ifrt',nargout==2);
 end
 
 
@@ -84,6 +85,15 @@ end
       fprintf(fileID_event,'%s \n','n/a');
   end
   fclose(fileID_event)
+
+  % create RT
+  if ifrt
+  RT = [];
+  RT.latency = 1000 * [EVENT(:).sample]/(vhdr.Fs); 
+  RT.laten   = RT.latency;
+  RT.est = fun_in_cell({EVENT(:).value},'eval(@(2:end))');  
+  RT = rt_check(RT);
+  end
 
   % write _channel.tsv
   fileID_chan = fopen([filename '_chan.tsv'],'w');  

@@ -9,6 +9,11 @@ function RT = rt_del(RT,ind,inv)
 % 08.08.2012
 % 03.04.2012
 
+if numel(ind)==1 && ind==0
+    return
+end
+
+
 if islogical(ind)
     ind=find(ind==1);
 end

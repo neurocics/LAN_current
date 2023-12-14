@@ -356,6 +356,10 @@ switch cfg.type
             if_mis=0;
         end
         
+
+
+
+
         
     case {'micromed', 'pos', 'POS'}
         % read file
@@ -512,8 +516,12 @@ end
     if if_pause
       for ip = size(PAUSES,1):-1:1
           laten(laten>(PAUSES(ip,2))) = laten(laten>(PAUSES(ip,2))) + PAUSES(ip,3);
+          if exist('misslaten','var')
           misslaten(misslaten>(PAUSES(ip,2))) = misslaten(misslaten>(PAUSES(ip,2))) + PAUSES(ip,3);
+          end
+          if exist('missing','var')
           missing.time(missing.time>(PAUSES(ip,2))) = missing.time(missing.time>(PAUSES(ip,2))) + PAUSES(ip,3);
+          end
       end
       RT.PAUSES=PAUSES;
       RT.PAUSES(:,2:3) = RT.PAUSES(:,2:3) * unit;

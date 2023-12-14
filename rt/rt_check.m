@@ -1,7 +1,8 @@
 function RT = rt_check(RT,cfg)
 % <*LAN)<] toolbox
-% v.1.1
+% v.1.2
 %
+% 12.12.2023 rt / response -99 if empty 
 % 22.03.2022 .good 
 % 11.12.2014 .est .rt .resp MUST BE MATRIX 
 % 01.04.2014 fix error
@@ -24,14 +25,14 @@ end
 
 % RT
 if ~isfield(RT,'rt')
-    RT.rt = zeros(size(RT.est));
+    RT.rt = ones(size(RT.est))*-99;
 elseif iscell(RT.rt)% MUST BE MATRIX 
     RT.rt = cell2mat(RT.rt);
 end
 
 % RT
 if ~isfield(RT,'resp')
-    RT.resp = zeros(size(RT.est));
+    RT.resp = ones(size(RT.est))*-99;
 elseif iscell(RT.resp)% MUST BE MATRIX 
     RT.resp = cell2mat(RT.resp);
 end
@@ -53,15 +54,11 @@ end
 
 
 % miss
-if isfield(RT,'misslaten')
-
-else
+if ~isfield(RT,'misslaten')
 RT.misslaten = [];    
 end
 
-if isfield(RT,'missest')
-
-else
+if ~isfield(RT,'missest')
 RT.missest= [];    
 end
 

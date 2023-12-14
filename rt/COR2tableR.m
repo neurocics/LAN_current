@@ -7,7 +7,7 @@ function COR2tableR(COR,cfg)
 %       cfg.where           carpeta
 %       cfg.filename        nombre del archivo
 %       cfg.electrode       indice del electrodo
-%       cfg.format  =  'txt', 'mat'
+%       cfg.format  =  'txt', 'mat','tsv'[NIBS]
 %       cfg.delimiter = '\t'  (';' ',' )
 %
 %       if COR is empty, is necesary defined:
@@ -34,11 +34,11 @@ if nargin == 0
    end
    return
 elseif nargin == 1;
-cfg.format = 'txt';
+cfg.format = 'tsv';
 %cfg.name = 'TABLE.cvs'
 end
 
-format = getcfg(cfg,'format','txt');
+format = getcfg(cfg,'format','tsv');
 
 if nargin == 1, cfg=[];end
 
@@ -103,7 +103,7 @@ if perfile
    %if isempty()
    filename2 = strrep(filename ,'%E' , num2str(ee) );
    switch format
-       case 'txt'
+       case {'txt', 'tsv'}
            if s==1
            fid{ee} = fopen([ where filename2 ],'wt');
            else
@@ -145,26 +145,39 @@ if perfile
     COR.RT = COR;
     end
     if isfield(COR,'RT')
+        % onset 
+        if isfield(COR.RT,'laten')
+            nh = nh +1;
+            HEADER{nh} = 'onset';
+            body{nh} = COR.RT.laten;
+
+            nh = nh +1;
+            HEADER{nh} = 'duration';
+            if isfield(COR, 'OTHER') && isfield(COR.OTHER, 'duration')
+            body{nh} = COR.OTHER.duration;
+            else
+            body{nh} = ones(size(COR.RT.laten));    
+            end
+        end  
+
+
+        if isfield(COR.RT,'est')
+            nh = nh +1;
+            HEADER{nh} = 'value';
+            body{nh} = COR.RT.est;
+        end
         if isfield(COR.RT,'rt')
             nh = nh +1;
             HEADER{nh} = 'rt';
             body{nh} = COR.RT.rt;
         end
-        if isfield(COR.RT,'est')
-            nh = nh +1;
-            HEADER{nh} = 'est';
-            body{nh} = COR.RT.est;
-        end
+
         if isfield(COR.RT,'resp')
             nh = nh +1;
-            HEADER{nh} = 'resp';
+            HEADER{nh} = 'response';
             body{nh} = COR.RT.resp;
         end
-        if isfield(COR.RT,'laten')
-            nh = nh +1;
-            HEADER{nh} = 'laten';
-            body{nh} = COR.RT.laten;
-        end    
+  
         if isfield(COR.RT,'correct')
             nh = nh +1;
             HEADER{nh} = 'correct';
@@ -214,7 +227,7 @@ if perfile
 
        %%% header only once
        %%% only txt
-       if strcmp(format,'txt')
+       if strcmp(format,'txt') || strcmp(format,'tsv')
        if s==1
            EF = [' %s ' delimiter ' '];
            for  f = 1:[size(HEADER,2)-1]
@@ -233,7 +246,7 @@ if perfile
        
        %case format
        switch format
-           case 'txt'
+           case {'txt','tsv'}
                %format
                for nb = 1:ncoef;
                   cellbody(:,nb) = mat_t_cell(body{nb});
@@ -338,32 +351,48 @@ else
 if isfield(COR,'rt')
     COR.RT = COR;
 end
+nh = 0;
 if isfield(COR,'RT')
+        % onset 
+        if isfield(COR.RT,'laten')
+            nh = nh +1;
+            HEADER{nh} = 'onset';
+            body{nh} = COR.RT.laten;
+
+            nh = nh +1;
+            HEADER{nh} = 'duration';
+            if isfield(COR, 'OTHER') && isfield(COR.OTHER, 'duration')
+            body{nh} = COR.OTHER.duration;
+            else
+            body{nh} = ones(size(COR.RT.laten));    
+            end
+        end  
+
+    if isfield(COR.RT,'est')
+        nh = nh +1;
+        HEADER{nh} = 'value';
+        body{nh} = COR.RT.est;
+    end
+
+    if isfield(COR.RT,'resp')
+        nh = nh +1;
+        HEADER{nh} = 'responce';
+        body{nh} = COR.RT.resp;
+    end
+
     if isfield(COR.RT,'rt')
         nh = nh +1;
         HEADER{nh} = 'rt';
         body{nh} = COR.RT.rt;
     end
-    if isfield(COR.RT,'est')
-        nh = nh +1;
-        HEADER{nh} = 'est';
-        body{nh} = COR.RT.est;
-    end
-    if isfield(COR.RT,'resp')
-        nh = nh +1;
-        HEADER{nh} = 'resp';
-        body{nh} = COR.RT.resp;
-    end
-    if isfield(COR.RT,'laten')
-        nh = nh +1;
-        HEADER{nh} = 'laten';
-        body{nh} = COR.RT.laten;
-    end    
+
+  
     if isfield(COR.RT,'correct')
             nh = nh +1;
             HEADER{nh} = 'correct';
             body{nh} = COR.RT.correct;
     end
+
     if isfield(COR.RT,'good')
             nh = nh +1;
             HEADER{nh} = 'good';
@@ -415,11 +444,11 @@ end
 %%%% writing the file
 
        %%% header
-       EF = [' %s ' delimiter ' '];
+       EF = ['%s ' delimiter ' '];
        for  f = 1:[size(HEADER,2)-1]
             fprintf(fid,EF,HEADER{f}); 
        end
-       fprintf(fid,' %s \n ',HEADER{size(HEADER,2)});
+       fprintf(fid,'%s \n',HEADER{size(HEADER,2)});
        
        %%% body
        ntrail = max(size(body{1}));
@@ -430,14 +459,14 @@ end
        for nb = 1:ncoef;
           cellbody(:,nb) = mat_t_cell(body{nb});
           if ischar(cellbody{1,nb})
-             dformat{nb} = [' %s'];
+             dformat{nb} = ['%s'];
           else
              % optimizar escritura
                 p = body{nb};
                 if islogical(p)
-                dformat{nb} = [' %s'];    
+                dformat{nb} = ['%s'];    
                 else % iscell{p}
-                dformat{nb} = [' %s'];       
+                dformat{nb} = ['%s'];       
 %                 else
 %                 p(p<=0)=[];
 %                 sobre =   fix(max(log10(p)) + 1);
