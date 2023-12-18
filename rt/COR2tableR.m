@@ -229,11 +229,11 @@ if perfile
        %%% only txt
        if strcmp(format,'txt') || strcmp(format,'tsv')
        if s==1
-           EF = [' %s ' delimiter ' '];
+           EF = ['%s' delimiter ];
            for  f = 1:[size(HEADER,2)-1]
                 fprintf(fid{ee},EF,HEADER{f}); 
            end
-           fprintf(fid{ee},' %s \n ',HEADER{size(HEADER,2)});
+           fprintf(fid{ee},'%s\n',HEADER{size(HEADER,2)});
        end
        end
        
@@ -251,7 +251,7 @@ if perfile
                for nb = 1:ncoef;
                   cellbody(:,nb) = mat_t_cell(body{nb});
                   if ischar(cellbody{1,nb})
-                     dformat{nb} = [' %s'];
+                     dformat{nb} = ['%s'];
                   else
                      % optimizar escritura
                         p = body{nb};
@@ -259,7 +259,7 @@ if perfile
                         sobre =   fix(max(log10(p)) + 1);
                         if sobre<1; sobre=1; end
                         bajo  =    abs(fix(min(log10(abs(p))) - 6));
-                        dformat{nb} = [' %' num2str(sobre)  '.' num2str(bajo)  'f'];
+                        dformat{nb} = ['%' num2str(sobre)  '.' num2str(bajo)  'f'];
                   end
                   if nb == ncoef
                      dformat{nb} = [ dformat{nb} '\n'];
@@ -444,11 +444,11 @@ end
 %%%% writing the file
 
        %%% header
-       EF = ['%s ' delimiter ' '];
+       EF = ['%s' delimiter ];
        for  f = 1:[size(HEADER,2)-1]
             fprintf(fid,EF,HEADER{f}); 
        end
-       fprintf(fid,'%s \n',HEADER{size(HEADER,2)});
+       fprintf(fid,'%s\n',HEADER{size(HEADER,2)});
        
        %%% body
        ntrail = max(size(body{1}));

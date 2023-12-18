@@ -73,16 +73,16 @@ end
 
 % write _event.tsv
   fileID_event = fopen([filename '_event.tsv'],'w');  
-  fprintf(fileID_event,'%s \t','onset')
-  fprintf(fileID_event,'%s \t','duration')
-  fprintf(fileID_event,'%s \t','value')
-  fprintf(fileID_event,'%s \n','stim_file')
+  fprintf(fileID_event,'%s\t','onset')
+  fprintf(fileID_event,'%s\t','duration')
+  fprintf(fileID_event,'%s\t','value')
+  fprintf(fileID_event,'%s\n','stim_file')
  
   for t =1:length(EVENT)
-      fprintf(fileID_event,'%3.4f \t',[EVENT(t).sample/vhdr.Fs]);
-      fprintf(fileID_event,'%3.1f \t',EVENT(t).duration);
-      fprintf(fileID_event,'%s \t',[EVENT(t).value]);
-      fprintf(fileID_event,'%s \n','n/a');
+      fprintf(fileID_event,'%3.4f\t',[EVENT(t).sample/vhdr.Fs]);
+      fprintf(fileID_event,'%3.1f\t',EVENT(t).duration);
+      fprintf(fileID_event,'%s\t',[EVENT(t).value]);
+      fprintf(fileID_event,'%s\n','n/a');
   end
   fclose(fileID_event)
 
@@ -96,12 +96,12 @@ end
   end
 
   % write _channel.tsv
-  fileID_chan = fopen([filename '_chan.tsv'],'w');  
-  fprintf(fileID_chan,'%s \t','name')
-  fprintf(fileID_chan,'%s \t','type')
-  fprintf(fileID_chan,'%s \t','unit')
-  fprintf(fileID_chan,'%s \t','status')
-  fprintf(fileID_chan,'%s \n','status_description')
+  fileID_chan = fopen([filename '_channels.tsv'],'w');  
+  fprintf(fileID_chan,'%s\t','name')
+  fprintf(fileID_chan,'%s\t','type')
+  fprintf(fileID_chan,'%s\t','unit')
+  fprintf(fileID_chan,'%s\t','status')
+  fprintf(fileID_chan,'%s\n','status_description')
   for e =1:length(names_i)
 
       fprintf(fileID_chan,'%s\t',names_i{e});

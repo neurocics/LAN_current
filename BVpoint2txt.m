@@ -145,23 +145,23 @@ fclose(fileID);
 % _electrodes.json
 if elec_json
 fileID_elecjson = fopen([filename '_electrodes.tsv'],'w');
-fprintf(fileID_elecjson,'%s \n',['name' sprintf('\t') ...
+fprintf(fileID_elecjson,'%s\n',['name' sprintf('\t') ...
                                 'x' sprintf('\t') ....
                                 'y' sprintf('\t') ...
                                 'z' sprintf('\t') ...
                                 'impedance' ]); 
 for n=1:length(Ename) 
-fprintf(fileID_elecjson,'%s \t',Ename{n});
-fprintf(fileID_elecjson,'%3.3f \t %3.3f \t %3.3f \t',Elec(n,:));
+fprintf(fileID_elecjson,'%s\t',Ename{n});
+fprintf(fileID_elecjson,'%3.3f\t%3.3f\t%3.3f\t',Elec(n,:));
 if isempty(elec_imp)
-fprintf(fileID_elecjson,'%s \n','<10');
+fprintf(fileID_elecjson,'%s\n','<10');
 elseif numel(elec_imp) < n
-fprintf(fileID_elecjson,'%s \n','<10');    
+fprintf(fileID_elecjson,'%s\n','<10');    
 else
     if isempty(elec_imp(n))
-    fprintf(fileID_elecjson,'%s \n','>100');    
+    fprintf(fileID_elecjson,'%s\n','>100');    
     else
-    fprintf(fileID_elecjson,'%3f \n',elec_imp(n)); 
+    fprintf(fileID_elecjson,'%3f\n',elec_imp(n)); 
     end
 end
 end
