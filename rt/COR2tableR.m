@@ -1,14 +1,15 @@
 function COR2tableR(COR,cfg) 
 %    <*LAN)<] 
-%    v.0.0.11
+%    v.0.5
 %
 % COR2TABLER write a table for R in a .txt file (one file per electrode)
 % COR2TABLER(COR,cfg) 
 %       cfg.where           carpeta
 %       cfg.filename        nombre del archivo
 %       cfg.electrode       indice del electrodo
-%       cfg.format  =  'txt', 'mat','tsv'[NIBS]
+%       cfg.format  =  'txt', 'mat','tsv'[BIDS]
 %       cfg.delimiter = '\t'  (';' ',' )
+%       cfg.units = 's'
 %
 %       if COR is empty, is necesary defined:
 %
@@ -17,6 +18,7 @@ function COR2tableR(COR,cfg)
 %       cfg.namemat  = 'COR' 
 %  Pablo Billeke
 
+%   28.12.2023  (PB) add compatibility to BIDS format 
 %   24.12.2012  (PB)
 %   10.01.2012  (PB FZ) add correct
 %   09.12.2011  (PB)  fix bug
@@ -38,6 +40,15 @@ cfg.format = 'tsv';
 %cfg.name = 'TABLE.cvs'
 end
 
+units = getcfg(cfg,'units','s');
+switch units
+    case 's'
+        unitst=0.001;
+    case 'ms'
+        unitst=1;
+    otherwise
+        unitst=1;
+end
 format = getcfg(cfg,'format','tsv');
 
 if nargin == 1, cfg=[];end
@@ -149,7 +160,7 @@ if perfile
         if isfield(COR.RT,'laten')
             nh = nh +1;
             HEADER{nh} = 'onset';
-            body{nh} = COR.RT.laten;
+            body{nh} = COR.RT.laten*unitst;
 
             nh = nh +1;
             HEADER{nh} = 'duration';
@@ -357,7 +368,7 @@ if isfield(COR,'RT')
         if isfield(COR.RT,'laten')
             nh = nh +1;
             HEADER{nh} = 'onset';
-            body{nh} = COR.RT.laten;
+            body{nh} = COR.RT.laten*unitst;
 
             nh = nh +1;
             HEADER{nh} = 'duration';

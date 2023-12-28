@@ -99,7 +99,7 @@ end
   fileID_chan = fopen([filename '_channels.tsv'],'w');  
   fprintf(fileID_chan,'%s\t','name')
   fprintf(fileID_chan,'%s\t','type')
-  fprintf(fileID_chan,'%s\t','unit')
+  fprintf(fileID_chan,'%s\t','units')
   fprintf(fileID_chan,'%s\t','status')
   fprintf(fileID_chan,'%s\n','status_description')
   for e =1:length(names_i)

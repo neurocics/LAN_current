@@ -1,6 +1,6 @@
 function BVpoint2txt(puntos,np,fiduciales,filename,elec_name,del_elec) 
 %    <*LAN)<] 
-%    v.0.2
+%    v.0.9
 %
 % BVpoint2txt write to  NAME_XYZ.txt  
 %                       _coorsystem.json
@@ -16,6 +16,7 @@ function BVpoint2txt(puntos,np,fiduciales,filename,elec_name,del_elec)
 %     elec_name  = {'Cz'm, ...} default = [];
 %
 % P Billeke 
+% 28.12.2023 fix for BVI to taillarach, an change the CapTrak as default {for BIDS}
 % 07.12.2023 add .json following BIDS eeg format 
 % 02.06.2022
 
@@ -23,7 +24,7 @@ if nargin == 1 && isstruct(puntos)
     cfg=puntos;
 
     coor_json           = getcfg(cfg,'coor_json',true);
-    coor_json_sys       = getcfg(cfg,'coor_json_sys','T1w');
+    coor_json_sys       = getcfg(cfg,'coor_json_sys','CapTrak');
     coor_json_uni       = getcfg(cfg,'coor_json_uni','mm');
 
     elec_json           = getcfg(cfg,'elec_json',true);
@@ -94,13 +95,12 @@ end
         Fidu(n-2,:)= eval([ '[ ' paso(k(end-2):end) ' ];']); 
     end    
     
-    
-    Elec = Elec(:,[1 3 2]);
-    Fidu = Fidu(:,[1 3 2]);% nas NAS / L / R
+    % esto es para trasforma el sitema interno de BV [BVI]
+    % a RAS / Taillarach
+    Elec = 128 - Elec(:,[3 1 2]);
+    Fidu = 128 - Fidu(:,[3 1 2]);% nas NAS / L / R
     Nfidu = {'NAS','LPA','RPA'};
     
-x = 0:.1:1;
-A = [x; exp(x)];
 
 %_coordsystem.json
 if coor_json
@@ -112,33 +112,33 @@ if coor_json
         '"NAS": [' newline  ...
             num2str(Fidu(1,[1])) ',' newline  ...
             num2str(Fidu(2,[1])) ',' newline  ...
-            num2str(Fidu(3,[1])) ',' newline  ...
+            num2str(Fidu(3,[1])) '' newline  ...
         '],' newline  ...
         '"LPA": [' newline  ...
             num2str(Fidu(1,[2])) ',' newline  ...
             num2str(Fidu(2,[2])) ',' newline  ...
-            num2str(Fidu(3,[2])) ',' newline  ...
+            num2str(Fidu(3,[2])) '' newline  ...
         '],' newline  ...
         '"RPA": [' newline  ...
             num2str(Fidu(1,[3])) ',' newline  ...
             num2str(Fidu(2,[3])) ',' newline  ...
-            num2str(Fidu(3,[3])) ',' newline  ...
+            num2str(Fidu(3,[3])) '' newline  ...
         ']' newline  ...
     '},' newline  ...
-    '"AnatomicalLandmarkCoordinateSystem": "' coor_json_sys ',' newline  ...
-    '"AnatomicalLandmarkCoordinateUnits": "' coor_json_uni '"' newline  ...
+    '"AnatomicalLandmarkCoordinateSystem": "' coor_json_sys '",' newline  ...
+    '"AnatomicalLandmarkCoordinateUnits": "' coor_json_uni '" ' newline  ...
 '}'])
 end
 
 % name_xyz.txt
 fileID = fopen([filename '.txt'],'w');
 for n=1:length(Ename) % 
-fprintf(fileID,'%s \t',Ename{n});    
-fprintf(fileID,'%3.3f \t %3.3f \t %3.3f \n',Elec(n,:));
+fprintf(fileID,'%s\t',Ename{n});    
+fprintf(fileID,'%3.3f\t%3.3f\t%3.3f\n',Elec(n,:));
 end
 for n=1:3
-fprintf(fileID,'%s \t',Nfidu{n});    
-fprintf(fileID,'%3.3f \t %3.3f \t %3.3f \n',Fidu(n,:));
+fprintf(fileID,'%s\t',Nfidu{n});    
+fprintf(fileID,'%3.3f t %3.3f \t %3.3f \n',Fidu(n,:));
 end
 fclose(fileID);
 
