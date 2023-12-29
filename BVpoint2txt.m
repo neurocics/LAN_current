@@ -1,6 +1,6 @@
 function BVpoint2txt(puntos,np,fiduciales,filename,elec_name,del_elec) 
 %    <*LAN)<] 
-%    v.0.9
+%    v.0.9.1
 %
 % BVpoint2txt write to  NAME_XYZ.txt  
 %                       _coorsystem.json
@@ -138,7 +138,7 @@ fprintf(fileID,'%3.3f\t%3.3f\t%3.3f\n',Elec(n,:));
 end
 for n=1:3
 fprintf(fileID,'%s\t',Nfidu{n});    
-fprintf(fileID,'%3.3f t %3.3f \t %3.3f \n',Fidu(n,:));
+fprintf(fileID,'%3.3f\t%3.3f\t%3.3f\n',Fidu(n,:));
 end
 fclose(fileID);
 
