@@ -387,7 +387,7 @@ if isfield(COR,'RT')
 
     if isfield(COR.RT,'resp')
         nh = nh +1;
-        HEADER{nh} = 'responce';
+        HEADER{nh} = 'response';
         body{nh} = COR.RT.resp;
     end
 
