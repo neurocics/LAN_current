@@ -4,7 +4,7 @@ function BVpoint2txt(puntos,np,fiduciales,filename,elec_name,del_elec)
 %
 % BVpoint2txt write to  NAME_XYZ.txt  
 %                       _coorsystem.json
-%                       _electrodes.json    files 
+%                       _electrodes.tsv    files 
 % BVpoint2txt(cfg)
 % BVpoint2txt(puntos,np,fiduciales,filename,elec_name)
 %
