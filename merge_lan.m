@@ -9,10 +9,11 @@ function LAN = merge_lan(LAN1,varargin)%LAN2,
 %             del lan2, eg:
 %             [0 1 1 2 1 1 1 2 2 2 2 ]
 %
-% V 1.1.6 
+% V 1.1.7
 %
 % Pablo Billeke
 
+% 15.04.2024 add freq.fourierp compatilibity
 % 12.11.2015 add merge refrences 
 % 14.08.2014 Add merge LAN.conditions
 % 22.10.2014 fix merge powspctrm
@@ -301,6 +302,8 @@ if isfield(LAN1,'freq')  &&  isfield(LAN2,'freq')
      LAN.freq.time = LAN1.freq.time;
  end    
  %
+
+
   if isfield(LAN1.freq,'powspctrm')  %&&  isfield(LAN2,freq,'freq') 
       if iscell(LAN1.freq.powspctrm)
         LAN.freq.powspctrm = cat(2,LAN1.freq.powspctrm,LAN2.freq.powspctrm)  ;
@@ -308,10 +311,20 @@ if isfield(LAN1,'freq')  &&  isfield(LAN2,'freq')
         LAN.freq.powspctrm = ( LAN1.freq.powspctrm .*( LAN1.trials/(LAN1.trials+LAN2.trials) )) + ( LAN2.freq.powspctrm.*( LAN2.trials/(LAN1.trials+LAN2.trials) )) ;
       end
   end
+
    if isfield(LAN1.freq,'fourierspctrm')  %&&  isfield(LAN2,freq,'freq') 
      LAN.freq.fourierspctrm = ( LAN1.freq.fourierspctrm .*( LAN1.trials/(LAN1.trials+LAN2.trials) )) + ( LAN2.freq.fouriersptrm.*( LAN2.trials/(LAN1.trials+LAN2.trials) )) ;
-  end
-  
+   end
+
+   if isfield(LAN1.freq,'fourierp')  %&&  isfield(LAN2,freq,'freq') 
+     LAN.freq.fourierp.data = cat(3,LAN1.freq.fourierp.data,LAN2.freq.fourierp.data );
+     LAN.freq.fourierp.mean = nanmean(LAN.freq.fourierp.data,3);
+     LAN.freq.fourierp.std = nanstd(LAN.freq.fourierp.data,[],3);
+     LAN.freq.fourierp.lslog = (LAN1.freq.fourierp.lslog+LAN2.freq.fourierp.lslog)/2;
+     LAN.freq.fourierp.lilog = (LAN1.freq.fourierp.lilog+LAN2.freq.fourierp.lilog)/2;
+     LAN.freq.fourierp.freq = LAN1.freq.fourierp.freq;
+     LAN.freq.fourierp.cfg = LAN1.freq.fourierp.cfg;
+   end
  %
   if isfield(LAN1.freq,'cfg')  %&&  isfield(LAN2,freq,'freq') 
      LAN.freq.cfg = LAN1.freq.cfg;
