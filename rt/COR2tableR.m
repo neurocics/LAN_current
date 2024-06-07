@@ -500,6 +500,8 @@ end
            for nc = 1:ncoef
                if ischar(cellbody{nt,nc})
                fprintf(fid,dformat{nc},cellbody{nt,nc}); 
+               elseif isstring(cellbody{nt,nc})
+               fprintf(fid,dformat{nc},cellbody{nt,nc}); 
                else
                fprintf(fid,dformat{nc},num2str(cellbody{nt,nc}(1))); 
                end
