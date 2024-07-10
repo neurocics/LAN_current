@@ -22,6 +22,7 @@ function [pval , stats] = lan_nonparametric(data,cfg)
 %          but only approxiamted p values (normal approximation)
 %
 % Pablo Billeke
+% 10.07.2024 compatibility for data in matrix rather than cell array 
 % 17.05.2020 Improve wait bar 
 % 16.02.2018 Improve performance unparied samples 
 % 17.06.2016
@@ -40,6 +41,12 @@ getcfg(cfg,'paired',2)
 getcfg(cfg,'fast',1)
 getcfg(cfg,'displayt',1)
 texto = getcfg(cfg,'text','');
+
+if ~iscell(data)
+    data={data};
+end
+
+
 if isempty(texto), texto = plus_text(); end
 
         if paired == 2 & cortest==0
