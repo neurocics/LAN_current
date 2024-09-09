@@ -484,7 +484,7 @@ for r = delind'
                 for OT = fieldnames(dataOTHER)'
                     eval([ 'dataOTHERmiss.'  OT{1}  '(cmis)= dataOTHER.'  OT{1}  '(r);'])
                 end
-        end
+            end
         rp = -1;  % end, miss 
         cmis = cmis+1;
     elseif del(r+(rp*dt)) == 2
