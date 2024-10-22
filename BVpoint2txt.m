@@ -13,6 +13,7 @@ function BVpoint2txt(puntos,np,fiduciales,filename,elec_name,del_elec)
 %     fidu_file  = 'file.fdp'
 %     n_elec    =   n
 %     filename  =  'NAME_XYZ.txt'
+%     del_elec   = [ n1 n2 ]  
 %     elec_name  = {'Cz'm, ...} default = [];
 %
 % P Billeke 
