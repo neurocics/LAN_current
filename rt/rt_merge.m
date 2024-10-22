@@ -114,7 +114,7 @@ ml1dx = indx(1:ml1);
 ml2dx = indx([(1+ml1):(ml2+ml1)]);
 
 
-if isfield(RT1, 'correct') && isfield(RT1, 'correct')
+if isfield(RT1, 'correct') && isfield(RT2, 'correct')
     ifc = true;
 else
     ifc = false;

@@ -1,5 +1,5 @@
 function RT = rt_read(cfg,LAN)
-%     v.2.01
+%     v.2
 %     <*LAN)<|
 % Read event file for reaction time analysis and modeling
 %
@@ -63,7 +63,6 @@ function RT = rt_read(cfg,LAN)
 % Pablo Billeke
 % Francisco Zamorano
 %
-% 22.10.2024 fix an error when adding OTHER field in missing event. CHECK!! INCOMPLETE JET!!!! 
 % 09.09.2024 fix read OTHER field in read RT structure 
 % 19.06.2023 add option to to in filename the name of the variable in WS 
 % 01.01.2023 'table' type
@@ -649,7 +648,6 @@ RT.nblock = 1;
     end
 
 %%%-------------------------------------------------------
-%%%-------------------------------------------------------
 
 if ~ifmiss
     if isfield(RT, 'OTHER')
@@ -663,8 +661,6 @@ if ~ifmiss
         %end
     end
 end
-%%%-------------------------------------------------------
-%%%-------------------------------------------------------
 
     % missing
     if if_mis
