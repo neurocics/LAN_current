@@ -33,6 +33,11 @@ getcfg(cfg,'good')
 getcfg(cfg,'force',0) 
 end
 
+if isfield(RT,'OTHER')
+   RT.OTHER= [];
+   warning('No soported OTHER field in fixlaten function ')
+end
+
 getcfg(cfg,'dw_delta', 350)
 getcfg(cfg,'up_delta', 350)
 % firt firts point

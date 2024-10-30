@@ -614,7 +614,7 @@ if ifml
         end
     end
     if exist('dataOTHERmiss', 'var')
-        RT.OTHER = dataOTHERmiss;
+        RT.OTHERmiss = dataOTHERmiss;
         %for OT = fieldnames(dataOTHER)'
         %    eval([ 'dataOTHERnomiss'  OT{1}  '(c)= dataOTHER'  OT{1}  '(r);'])
         %end
@@ -652,16 +652,16 @@ RT.nblock = 1;
 %%%-------------------------------------------------------
 
 if ~ifmiss
-    if isfield(RT, 'OTHER')
-    RT = rmfield(RT, 'OTHER'); %%% FALTA EVALUAR EL CASO NO DAT !!!!!
-    end
+    %if isfield(RT, 'OTHER')
+    %RT = rmfield(RT, 'OTHER'); %%% FALTA EVALUAR EL CASO NO DAT !!!!!
+    %end
     RT = miss2rt(RT);
-    if exist('dataOTHER', 'var')  
-        RT.OTHER = dataOTHER;
+    %if exist('dataOTHER', 'var')  
+    %    RT.OTHER = dataOTHER;
         %for OT = fieldnames(dataOTHER)'
         %    eval([ 'dataOTHERnomiss'  OT{1}  '(c)= dataOTHER'  OT{1}  '(r);'])
         %end
-    end
+    %end
 end
 %%%-------------------------------------------------------
 %%%-------------------------------------------------------
