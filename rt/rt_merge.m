@@ -129,6 +129,9 @@ if ~iscell(RT1.rt)
     RT.laten(l1dx) = RT1.laten;
     RT.resp(l1dx) = RT1.resp;
     RT.est(l1dx) = RT1.est;
+    if isfield(RT1,'tlatency') && isfield(RT2,'tlatency')
+    RT.tlatency(l1dx) = RT1.tlatency;   
+    end
     
     if ifc, RT.correct(l1dx) = RT1.correct;end
     
@@ -144,7 +147,10 @@ if ~iscell(RT1.rt)
         RT.laten(l2dx) = RT2.laten;
         RT.resp(l2dx) = RT2.resp;
         RT.est(l2dx) = RT2.est;
-        
+        if isfield(RT1,'tlatency') && isfield(RT2,'tlatency')
+         RT.tlatency(l2dx) = RT2.tlatency; 
+         RT.trial = 1:numel(RT.est);
+        end
         if ifc, RT.correct(l2dx) = RT2.correct;end
         
         try

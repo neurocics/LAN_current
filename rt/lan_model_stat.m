@@ -164,7 +164,44 @@ case {'glm','lm'}
     %stats.t{x}(p)=T(x);
     %stats.b{x}(p)=b(x);
     end
+
+    case {'ols'}
+    x_s = 'cat(2' ;
+    for x=1:nx
+    if ifuni, rp = '1'; else rp = 'p' ; end
+       x_s = [ x_s , strrep( strrep(', varargin{x}(p,:)'' ' , 'x' , num2str(x)), 'p' , rp )    ];
+    end
+    x_s = [ x_s ' )  '];
+
+    for p = 1:np
+    bar_wait(p,np,ops,texto);
+    % no perform regretion with NaNs    
+    if any(isnan(y(p,:)))   
+        continue
+    end
+     x = eval(x_s);
+    [b a s] = glmfit( x(:,2:end) , y(p,:) );
+   
+   
+    %y_fit = x*b;
+    %df  = -diff(size(x));
+    %s   = (sum((yy-y_fit).^2)/df)^0.5;
+    %se  = (diag(inv(x'*x))*s^2).^0.5;
+    %T   = ; % aboid error in redundant regressors ??
+    %P   = (T>=0).*(1 - tcdf(T,df))*2 + (T<0).*(tcdf(T,df))*2;
+ 
+    for x = 1:nx%+1
+    pval{x}(p)=s.p(x);
+    stats.t{x}(p)=s.t(x);
+    stats.b{x}(p)=b(x);
+    end
+    end
     
+    %for x = 1:nx%+1
+    %pval{x}=  (stats.t{x}>=0).*(1 - tcdf(stats.t{x},df))*2 + (stats.t{x}<0).*(tcdf(stats.t{x},df))*2;  %P(x);
+    %stats.t{x}(p)=T(x);
+    %stats.b{x}(p)=b(x);
+    %end    
     
 case 'robust'
     x_s = 'cat(2' ;

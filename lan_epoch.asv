@@ -173,7 +173,7 @@ else
           elseif condition ==2
                    EEGout =[];   
                   for tr = 1:length(LAN.data)
-                      if isempty(LAN.data{tr}) || (final(tr)>LAN.pnts(tr)) || inicio(tr)<1 , continue, end
+                      if isempty(LAN.data{tr}) | (final(tr)>LAN.pnts{tr}), continue, end
                       EEGout{tr}(:,:) = LAN.data{tr}(:,inicio(tr):final(tr));
                       selected{tr}(1,:) = LAN.selected{tr}(1,inicio(tr):final(tr));
                       selected{tr}(1,:) = selected{tr}(1,:) - selected{tr}(1) +1;

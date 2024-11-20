@@ -20,11 +20,13 @@ LAN.data_del.data = [];
 LAN.data_del.trials = [];
 LAN.data_del.pos = [];
 
-[y x ] = size(trials);
-if x == 1 & y > 1
-    trials = trials'
+[y, x ] = size(trials);
+if x == 1 && y > 1
+    trials = trials';
 end
-
+if islogical(trials)
+    trials = find(trials);
+end
 tr = sort(trials, 'descend');
 
 for i = 1:length(tr)
@@ -37,11 +39,11 @@ LAN.data_del.trials = length(tr);
 pos = tr;
 
 
-        [y x] = size(pos);
+        [y, x] = size(pos);
         time_n = zeros(x,3);
        
-        pos = sort(pos,2,'descend')
-        cont = 0
+        pos = sort(pos,2,'descend');
+        cont = 0;
         for i = pos
             cont = cont + 1;
             
@@ -54,5 +56,6 @@ pos = tr;
         LAN.data_del.time = time_n;
             
 
+        LAN.RT = rt_del(LAN.RT,trials);
 end
 

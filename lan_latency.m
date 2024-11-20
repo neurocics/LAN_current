@@ -51,6 +51,7 @@ end
 
 
 
+
 if ~ischar(parametres)% ~= 'no'
 
 inicio = parametres(1,:);
@@ -344,7 +345,11 @@ elseif length(res) > 1
     %
    
     else
-        zeros = latency{1}.zero;
+        try
+            zeros = latency{1}.zero;
+        catch
+            zeros = [];
+        end
         for  i = 2:length(latency)
             if latency{i}.cuantos == 0, continue, end,
             zeros = cat(2,zeros,latency{i}.zero);
@@ -372,6 +377,11 @@ if ifepoch
     % delete repeated  event !!!
     cfg.times( [diff(cfg.times(:,3))==0 ; false ],:) = [];
     LAN = lan_epoch(LAN,cfg);
+
+    % fix RT
+    LAN.RT.trial = 1:numel(LAN.RT.est);
+    LAN.RT.tlatency = ones(size(LAN.RT.est))*0;
+
 end
 
 if delnoR   

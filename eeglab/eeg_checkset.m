@@ -922,7 +922,7 @@ for inddataset = 1:length(ALLEEG)
             res = com;
             EEG.icasphere = [];
         end;
-        if option_computeica
+        if 0 %option_computeica
             if ~isempty(EEG.icaact) & ndims(EEG.icaact) < 3 & (EEG.trials > 1)
                 disp( [ 'eeg_checkset note: independent component made 3-D' ]); 
                 res = com;
