@@ -28,8 +28,23 @@ if iscell(LAN)
 else
 
 centred = getcfg(cfg, 'centred', [0 0]);
+
+% smoothing constant lambda   
+try
+lambda = cfg.lambda;
+catch
+lambda = 0.00001;
+end
+
+% head radius  
+try
+head = cfg.head;
+catch
+head = 10;
+end
 getcfg(cfg, 'Sy', 1);
 getcfg(cfg, 'Sx', 1);
+getcfg(cfg, 'Sy', 1);
 % parameters
 
 %chanlocs
