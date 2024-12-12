@@ -725,20 +725,37 @@ function cartas_button_Callback(source,eventdata)
              
               %pvalc = squeeze(min(pvalc_d(:,:,:),[],2));
              
-         elseif staOK&&isfield(GLAN.timefreq,'hh')&&~sCOR
+         elseif staOK&&isfield(GLAN.timefreq,'hh')&&~sCOR % ---------------------------------------------------------------------------------------
              
-             try
-             name = fieldnames(GLAN.timefreq.stat{stav});
-             rval = eval([ 'GLAN.timefreq.stat{stav}.' name{1}    ';'    ]);
-             catch
-             rval = GLAN.timefreq.pval{stav};                  
-             end
-             %
+             if ischar(GLAN.timefreq.cfg.stata) &&  strcmp(GLAN.timefreq.cfg.stata,'glm')
+             rval = GLAN.timefreq.pval{condM(1)};  
+
+             rval = squeeze(rval(fr,roi,:));
+             
+             
+             hh = GLAN.timefreq.hh{condM(1)};
+             pval = GLAN.timefreq.pval{condM(1)};
+
+
+             else
+             
+
+                 try
+                 name = fieldnames(GLAN.timefreq.stat{stav});
+                 rval = eval([ 'GLAN.timefreq.stat{stav}.' name{1}    ';'    ]);
+                 catch
+                 rval = GLAN.timefreq.pval{stav};                  
+                 end
+
              rval = squeeze(rval(fr,roi,:));
              
              
              hh = GLAN.timefreq.hh{stav};
              pval = GLAN.timefreq.pval{stav};
+
+             end
+             %
+            
             % if length(nthre)==2, calfa=nthre(2); else calfa=0.05; end 
             [hhc pvalc cluster ] = cl_random_2d((pval(fr,roi,:)<=pv_unc),...
                                    -log10(pval(fr,roi,:)),...
