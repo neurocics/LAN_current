@@ -147,6 +147,13 @@ else
     sd =1;
     ma_s = '(Matrices individuales)';
 end
+
+ds=false;
+if isfield(GLAN.timefreq.cfg, 'stata')
+    if ischar(GLAN.timefreq.cfg.stata) &&  (strcmp(GLAN.timefreq.cfg.stata,'glm'))
+        ds =true;
+    end
+end
 try    
 ncond = length(GLAN.timefreq.cond)  ;
 catch
@@ -643,8 +650,9 @@ function cartas_button_Callback(source,eventdata)
     if ischar(fr), eval([ 'fr = [' fr '];' ]); end
     if ischar(roi),eval([ 'roi = [' roi '];' ]); end
    clear ndata nndata
+   
      for nc = 1:length(condM)
-         if sd
+         if sd  && ~sd
          ndata{nc} = nanmean(GLAN.timefreq.subdata{congM(nc),condM(nc)}(fr,roi,:,:),2);
          %nndata =mean( GLAN.timefreq.subdata{cond2}(fr,roi,:,:),2);
          else
@@ -1009,15 +1017,17 @@ if n
    ifz = 1;
    stav = get(STA,'Value');
    stas = get(STA,'String');
-
-   if (stav < length(stas(:)')-1)&&ifz
+   if (stav < length(stas(:)')-1) && sd
+   ndatan{congM(c),condM(c)} = GLAN.timefreq.stat{congM(c),condM(c)}(freq,:,:,:); 
+   ifz = 0;
+   elseif (stav < length(stas(:)')-1)&&ifz
    zdatan{congM(c),condM(c)} = GLAN.timefreq.stat{stav}(freq,:,:,:); 
    ifz = 1;
    else
    ifz = 0;
-   end %else
+   %end %else
    ndatan{congM(c),condM(c)} = ndata{congM(c),condM(c)}(freq,:,:,:); %SS
-   %end
+   end
 end
  % not mean nan
  pp = ndatan{congM(c),condM(c)}(:,:,tiempo,:);
@@ -1126,6 +1136,8 @@ freq =   frt;
 tiempo = time;
 %n = 1;
 
+
+
 clear *data*
 for c = 1:length(congM)
 ndata{c} = GLAN.timefreq.subdata{congM(c),condM(c)};
@@ -1161,13 +1173,33 @@ ndatan{c} = nanmean(nanmean(ndatan{c}(freq(1):freq(end), :,time,:),3),1);
 
 end
 
-
+if ~sd %% si hay datos for sujetos y son validos para stadistica 
 cfgS=[];
 cfgS.paired = strcmp(rs,'D');
 
 
- [pval, stat] = lan_nonparametric(ndatan,cfgS);
+[pval, stat] = lan_nonparametric(ndatan,cfgS);
  pfdr = max(pval(pval<=fdr2(pval,0.05)));
+
+
+
+
+else
+
+%%%%  glm 
+
+pval1 = nanmin(nanmin(GLAN.timefreq.pval{congM(c),condM(c)}(freq(1):freq(end), :,time,:),[],3),[],1);
+
+T  = nanmean(nanmean(GLAN.timefreq.stat{congM(c),condM(c)}(freq(1):freq(end), :,time,:),3),1);
+df = size(GLAN.timefreq.subdata{congM(c),condM(c)},4)   -1;
+pval   = (T>=0).*(1 - tcdf(T,df))*2 + (T<0).*(tcdf(T,df))*2;
+pval   = (pval+pval1)/2;
+
+pfdr = max(pval(pval<=fdr2(pval,0.05)));
+
+end
+
+
  %ind_x = find(pval<=pfdr);
  if ~isempty( pfdr)
   disp([ 'to ajust for FDR, please run the following  command in the command window :)'  ])
@@ -1179,6 +1211,7 @@ cfgS.paired = strcmp(rs,'D');
   disp([ 'No electrodes survived FDR correction :('  ])  
  end
 clear *data*
+
 
 try
     figure(estata);

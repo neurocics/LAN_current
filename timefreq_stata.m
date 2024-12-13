@@ -860,13 +860,6 @@ if ifstata && ~mdif && ~no1_st
             cfgM.ops = ['pre(Second Level ' stata    ' MODEL)' ];
             cfgM.texto = texto;
             
-%             % delet intercep regressors  
-%             intercepto = glm_matrix==1;
-%             intercepto = sum(intercepto,1)==size(intercepto,1);
-%             if any(intercepto)
-%             glm_matrix(:,intercepto) = []; 
-%             end
-           
             Regressors=[];
             for nR =1:size(glm_matrix,2)
                Regressors{nR} =  glm_matrix(:,nR)';
@@ -880,7 +873,7 @@ if ifstata && ~mdif && ~no1_st
                 end
                 pval{group(i),cond(i)}=r_pval{RegressorOI};
                 stat{group(i),cond(i)}=r_stat.t{RegressorOI};
-                %stat.b{i}=r_stat.b{RegressorOI};
+                betas{group(i),cond(i)}=r_stat.b{RegressorOI};
             end
             
             % for MCP calculatation will be use A and not  v_freq
@@ -891,19 +884,18 @@ if ifstata && ~mdif && ~no1_st
     
     % Save results in the LAN structur 
     
+    %-------case of model glm   robust lme-------
     if iscell(pval)
-    GLAN.timefreq.stat(:,nbcomp) = stat(:);   
-    GLAN.timefreq.pval(:,nbcomp) = pval(:);
+    GLAN.timefreq.stat(:,nbcomp) = stat(:)';   
+    GLAN.timefreq.pval(:,nbcomp) = pval(:)';
     for np = 1:length(pval)
     hh = false(size(pval{np}));
     hh(pval{np}<alpha)=true;
     GLAN.timefreq.hh{np,nbcomp} = hh  ;
-%     if length(a)==2 &&  ~strcmp(stata,'nonparametric');
-%        hhsig = sign(mean(a{1},4)- mean(a{2},4));
-%     elseif length(a)==1 &&  ~strcmp(stata,'nonparametric');
-%        hhsig = sign(mean(a{1},4)); 
-%     end
+    GLAN.data = betas;
     end
+    %----------------------------------------------
+
     else
 
     GLAN.timefreq.stat{nbcomp} = stat;   
@@ -1040,6 +1032,11 @@ if ifstata  && ~no1_st && strcmp(stata,'nonparametric')
 GLAN.timefreq.pval{nbcomp} = pval;
 GLAN.timefreq.hh{nbcomp} = hh;
 GLAN.timefreq.stat{nbcomp} = -log(pval);
+%elseif ifstata  && no1_st && (strcmp(stata,'glm') || strcmp(stata,'robust') ||strcmp(stata,'mle'))  %, 
+%GLAN.timefreq.pval{nbcomp} = pval;
+%GLAN.timefreq.hh{nbcomp} = hh;
+%GLAN.timefreq.stat{nbcomp} = stat;
+%GLAN.timefreq.data{nbcomp} = stat;
 elseif ifstata  && no1_st && strcmp(stata,'nonparametric')
 pval= GLAN.timefreq.pval{nbcomp};
 hh= GLAN.timefreq.hh{nbcomp};
