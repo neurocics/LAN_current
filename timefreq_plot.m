@@ -652,7 +652,7 @@ function cartas_button_Callback(source,eventdata)
    clear ndata nndata
    
      for nc = 1:length(condM)
-         if sd  && ~sd
+         if sd  %&& ~sd
          ndata{nc} = nanmean(GLAN.timefreq.subdata{congM(nc),condM(nc)}(fr,roi,:,:),2);
          %nndata =mean( GLAN.timefreq.subdata{cond2}(fr,roi,:,:),2);
          else
