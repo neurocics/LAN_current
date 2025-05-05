@@ -16,6 +16,19 @@ function GLAN = timefreq_stata(GLAN,cfg)
 %     group = [g1 g1 g2 g2]
 %     matdif   = [1 -1 2 -2]
 %     matdif_transform = 'log', 'none', 'log10'
+%
+% --------------------------------------------------------
+%  %% EN implementacion
+%   model for second levels 
+%   to activite this option it is requiered that cfg.stata was setted in
+%   thesos option 
+%     stata,'glm'
+%     stata,'robust'
+%     stata,'lme'
+%
+%   glm_matrix = [ ]
+%  RegressorOI
+% -------------------------------------------------
 %  stata =   'nonparametric' || 1
 %             
 %  data_type = 'pow', 't', 'b'      
@@ -500,7 +513,7 @@ end
 %--
 
 
-%-- EXTRAC DATA FOR LAN SINGLE STRUCTURS
+%-- EXTRACT DATA FOR LAN SINGLE STRUCTURS
     %texto = last_text(texto,['load subject file ' sujetos{g}{s}   ]);
     fprintf(['>>> ' sujetos{g}{s}  '\n' ]);
     for c = cond(group==g)
@@ -855,17 +868,10 @@ if ifstata && ~mdif && ~no1_st
             [pval, stat] = lan_nonparametric(a,cfg);
         case {'glm','robust', 'mle'}
             cfgM=[];
-            cfgM.type = 'glm'; % , 'robust', 'lme' % -------------------------------------------------------
+            cfgM.type = stata ; %'glm'; % , 'robust', 'lme' % -------------------------------------------------------
             cfgM.ops = ['pre(Second Level ' stata    ' MODEL)' ];
             cfgM.texto = texto;
             
-%             % delet intercep regressors  
-%             intercepto = glm_matrix==1;
-%             intercepto = sum(intercepto,1)==size(intercepto,1);
-%             if any(intercepto)
-%             glm_matrix(:,intercepto) = []; 
-%             end
-           
             Regressors=[];
             for nR =1:size(glm_matrix,2)
                Regressors{nR} =  glm_matrix(:,nR)';
@@ -873,12 +879,13 @@ if ifstata && ~mdif && ~no1_st
             
             for i = 1:length(a)
                 if isempty(Regressors)
-                [pval stat] = lan_model_stat(a{i}, cfgM);    
+                [r_pval r_stat] = lan_model_stat(a{i}, cfgM);    
                 else
-                [pval stat] = lan_model_stat(cat(2,a(i),Regressors{:}), cfgM);
+                [r_pval r_stat] = lan_model_stat(cat(2,a(i),Regressors{:}), cfgM);
                 end
-                %pval{i}=r_pval;
-                %stat{i}=r_stats;
+                pval{group(i),cond(i)}=r_pval{RegressorOI};
+                stat{group(i),cond(i)}=r_stat.t{RegressorOI};
+                betas{group(i),cond(i)}=r_stat.b{RegressorOI};
             end
             
             % for MCP calculatation will be use A and not  v_freq
@@ -889,19 +896,18 @@ if ifstata && ~mdif && ~no1_st
     
     % Save results in the LAN structur 
     
+    %-------case of model glm   robust lme-------
     if iscell(pval)
-    GLAN.timefreq.stat(:,nbcomp) = stat(:);   
-    GLAN.timefreq.pval(:,nbcomp) = pval(:);
-    for np = length(pval)
+    GLAN.timefreq.stat(:,nbcomp) = stat(:)';   
+    GLAN.timefreq.pval(:,nbcomp) = pval(:)';
+    for np = 1:length(pval)
     hh = false(size(pval{np}));
     hh(pval{np}<alpha)=true;
     GLAN.timefreq.hh{np,nbcomp} = hh  ;
-%     if length(a)==2 &&  ~strcmp(stata,'nonparametric');
-%        hhsig = sign(mean(a{1},4)- mean(a{2},4));
-%     elseif length(a)==1 &&  ~strcmp(stata,'nonparametric');
-%        hhsig = sign(mean(a{1},4)); 
-%     end
+    GLAN.data = betas;
     end
+    %----------------------------------------------
+
     else
 
     GLAN.timefreq.stat{nbcomp} = stat;   
@@ -1038,6 +1044,11 @@ if ifstata  && ~no1_st && strcmp(stata,'nonparametric')
 GLAN.timefreq.pval{nbcomp} = pval;
 GLAN.timefreq.hh{nbcomp} = hh;
 GLAN.timefreq.stat{nbcomp} = -log(pval);
+%elseif ifstata  && no1_st && (strcmp(stata,'glm') || strcmp(stata,'robust') ||strcmp(stata,'mle'))  %, 
+%GLAN.timefreq.pval{nbcomp} = pval;
+%GLAN.timefreq.hh{nbcomp} = hh;
+%GLAN.timefreq.stat{nbcomp} = stat;
+%GLAN.timefreq.data{nbcomp} = stat;
 elseif ifstata  && no1_st && strcmp(stata,'nonparametric')
 pval= GLAN.timefreq.pval{nbcomp};
 hh= GLAN.timefreq.hh{nbcomp};
@@ -1049,19 +1060,19 @@ end
 % MULTIPLE COMPARISON CORRECTION 
 % --
 
-if strcmp(stata,'glm')||strcmp(stata,'robust')
+if 0  % strcmp(stata,'glm')||strcmp(stata,'robust')
              intercepto = glm_matrix==1;
              intercepto = sum(intercepto,1)==size(intercepto,1);
-             if any(intercepto) && size(glm_matrix,2)==1
+            % if any(intercepto) && size(glm_matrix,2)==1
 %               glm_matrix(:,intercepto) = []; 
-                indexROF=1;
-             elseif ~any(intercepto) 
-                indexROF=RegressorOI+1; 
-             else
-                indexROF=RegressorOI; 
-             end    
+            %    indexROF=1;
+            % elseif ~any(intercepto) 
+            %    indexROF=RegressorOI+1; 
+            % else
+            %    indexROF=RegressorOI; 
+            % end    
     
-    stat = GLAN.timefreq.stat.t{indexROF};
+    stat = GLAN.timefreq.stat{indexROF};
     pval = GLAN.timefreq.pval{indexROF};
     hh = false(size(pval));
     hh(pval<alpha) = true;

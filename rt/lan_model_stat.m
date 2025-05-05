@@ -143,7 +143,7 @@ case {'glm','lm'}
     %[b a s] = glmfit( eval(x_s) , y(p,:) );
     x = eval(x_s);
     yy = y(p,:)'; 
-    b   = (x'*x)\x'*yy;
+    b   = (x'*x)\x'*yy; % mínimos cuadrados ordinarios (OLS)
       
     y_fit = x*b;
     df  = -diff(size(x));
