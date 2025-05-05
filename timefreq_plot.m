@@ -173,7 +173,7 @@ for ic = 1:length(GLAN.timefreq.comp)
     elseif ~isfield(GLAN.timefreq.cfg, 'norma') || length(GLAN.timefreq.cfg.norma)<ic || isempty(GLAN.timefreq.cfg.norma{ic})
       GLAN.timefreq.cfg.norma{ic} = ' ';  
     end
-    if ~isfield(GLAN.timefreq.cfg, 'bl') || length(GLAN.timefreq.cfg.bl{ic})<2
+    if ~isfield(GLAN.timefreq.cfg, 'bl') || length(GLAN.timefreq.cfg.bl)<ic || length(GLAN.timefreq.cfg.bl{ic})<2
       GLAN.timefreq.cfg.bl{ic} = [0 0];
       GLAN.timefreq.cfg.norma{ic} = ' '; 
     end

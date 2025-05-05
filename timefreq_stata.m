@@ -107,7 +107,12 @@ end
 
 % data_type
   getcfg(cfg,'data_type','pow')
+  if ~isfield(GLAN , 'timefreq' ) | iscell(GLAN.timefreq.cfg.data_type) | ~isfield(GLAN.timefreq.cfg,  'data_type' )
   GLAN.timefreq.cfg.data_type{nbcomp}=data_type;
+  else
+  GLAN.timefreq.cfg.data_type = {GLAN.timefreq.cfg.data_type };
+  GLAN.timefreq.cfg.data_type{nbcomp} = data_type;
+  end
 
 if (strcmp(data_type,'t'))||(strcmp(data_type,'b'))
     ifmodel=true;
@@ -185,7 +190,14 @@ m = getcfg(cfg, 's', 0 );
 if m == 0
    m = getcfg(cfg, 'm', 'i' );    
 end
-GLAN.timefreq.cfg.s{nbcomp} = m;
+  if ~isfield(GLAN.timefreq.cfg,  's' ) | iscell(GLAN.timefreq.cfg.s) 
+  GLAN.timefreq.cfg.s{nbcomp} = m;
+  else
+  GLAN.timefreq.cfg.s = {GLAN.timefreq.cfg.s };
+  GLAN.timefreq.cfg.s{nbcomp} = m;
+  end
+
+
 %---
 
 ifsmooth = getcfg(cfg, 'ifsmooth', 1 );
