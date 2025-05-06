@@ -890,7 +890,7 @@ end
      end
        
         
-     ppval(hhc==1) = ppval_2(hhc==1);
+     ppval(any(hhc==1,3)) = ppval_2(any(hhc==1,3));
      
 
      
@@ -1135,7 +1135,14 @@ function estata_button_Callback(source,eventdata)
 freq =   frt;
 tiempo = time;
 %n = 1;
+ stav = get(STA,'Value');
+ stas = get(STA,'String');
 
+ if stav < length(stas(:)')-1
+     staOK = true;
+ else
+     staOK = false;
+ end
 
 
 clear *data*
@@ -1173,7 +1180,7 @@ ndatan{c} = nanmean(nanmean(ndatan{c}(freq(1):freq(end), :,time,:),3),1);
 
 end
 
-if ~sd %% si hay datos for sujetos y son validos para stadistica 
+if ~staOK && sd %% si hay datos for sujetos y son validos para stadistica 
 cfgS=[];
 cfgS.paired = strcmp(rs,'D');
 
@@ -1184,16 +1191,16 @@ cfgS.paired = strcmp(rs,'D');
 
 
 
-else
+elseif staOK
 
 %%%%  glm 
 
-pval1 = nanmin(nanmin(GLAN.timefreq.pval{congM(c),condM(c)}(freq(1):freq(end), :,time,:),[],3),[],1);
+pval1 = nanmin(nanmin(GLAN.timefreq.pval{condM(c),congM(c)}(freq(1):freq(end), :,time,:),[],3),[],1);
 
-T  = nanmean(nanmean(GLAN.timefreq.stat{congM(c),condM(c)}(freq(1):freq(end), :,time,:),3),1);
+T  = nanmean(nanmean(GLAN.timefreq.stat{condM(c) ,congM(c)}(freq(1):freq(end), :,time,:),3),1);
 df = size(GLAN.timefreq.subdata{congM(c),condM(c)},4)   -1;
 pval   = (T>=0).*(1 - tcdf(T,df))*2 + (T<0).*(tcdf(T,df))*2;
-pval   = (pval+pval1)/2;
+pval   = (pval+2*pval1)/3;
 
 pfdr = max(pval(pval<=fdr2(pval,0.05)));
 
