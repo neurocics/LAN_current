@@ -17,6 +17,7 @@
 %    X  :  Change X axis limit
 %    Y  :  Change Y axis limit
 %    Jet Hot Cool Par : Colormaps 
+%    i  : shortquit to save .png for inskape or latex 
 %
 %   Pablo Billeke
 %   18.02.2018 
@@ -84,7 +85,30 @@
                 colormap(gca,cool(1000))
             case 'Par'
                 set(source,'String','Jet')
-                colormap(gca,parula(1000))
+                colormap(gca,parula(1000))                           
+            case 'i'
+               limX = get(gca,'Xlim');
+               R = gui_q({'Lim X axis'},{ num2str(limX)});
+               set(gca,'Xlim',eval([ '[' R{1} ']' ]));
+
+               limY = get(gca,'Ylim');
+               R = gui_q({'Lim Y axis'},{ num2str(limY)});
+               set(gca,'Ylim',eval([ '[' R{1} ']' ]));
+
+               limC = get(gca,'Clim');
+               R = gui_q({'Lim Color'},{ num2str(limC)});
+               set(gca,'Clim',eval([ '[' R{1} ']' ]));
+
+               delete(findall(gcf, 'Type', 'uicontrol'))
+                R = gui_q({'File name'},{ '_.png'});
+                axis off;
+                set(gca, 'Position', [0 0 1 1]); % Ajustar el área del gráfico
+                set(gcf, 'Color', 'White')
+                % Guardar como PNG o JPG (sin bordes ni ejes)
+                exportgraphics(gcf, R{1}, 'Resolution', 300, 'BackgroundColor', 'none')
+
+
+
         end;
         
        end;

@@ -131,6 +131,7 @@ global controles
 controles = figure('Position',pcc,...
     'Name',[ 'Controles en LAN v.' lanversion ],'NumberTitle','off','MenuBar', 'none');%,'Color','k');
 
+
 % ----------------------------
 % -- CHEQUEO DE LA MATRIZ
 
@@ -1050,6 +1051,7 @@ COMP_topocond
         uicontrol('Style','pushbutton','Position',[0,20,20,20],'String','S','Callback',{@editF})
         uicontrol('Style','pushbutton','Position',[0,40,20,20],'String','C','Callback',{@editF})
         uicontrol('Style','pushbutton','Position',[0,60,20,20],'String','Jet','Callback',{@editF})
+        uicontrol('Style','pushbutton','Position',[0,80,20,20],'String','i','Callback',{@editF})
 cc =0;
 for c = 1:length(condM)
     cc = cc +1;
@@ -1076,6 +1078,9 @@ COMP_topocond
         uicontrol('Style','pushbutton','Position',[0,0,20,20],'String','E','Callback',{@editF})
         uicontrol('Style','pushbutton','Position',[0,20,20,20],'String','S','Callback',{@editF})
         uicontrol('Style','pushbutton','Position',[0,40,20,20],'String','C','Callback',{@editF})
+        uicontrol('Style','pushbutton','Position',[0,60,20,20],'String','Jet','Callback',{@editF})
+        uicontrol('Style','pushbutton','Position',[0,80,20,20],'String','i','Callback',{@editF})
+
 cc =0;
 
 if length(condM) == 1
@@ -1196,8 +1201,9 @@ elseif staOK
 %%%%  glm 
 
 pval1 = nanmin(nanmin(GLAN.timefreq.pval{condM(c),congM(c)}(freq(1):freq(end), :,time,:),[],3),[],1);
-
-T  = nanmean(nanmean(GLAN.timefreq.stat{condM(c) ,congM(c)}(freq(1):freq(end), :,time,:),3),1);
+paso=GLAN.timefreq.stat{condM(c) ,congM(c)};
+paso(paso==0)=NaN;
+T  = nanmean(nanmean(paso(freq(1):freq(end), :,time,:),3),1);
 df = size(GLAN.timefreq.subdata{congM(c),condM(c)},4)   -1;
 pval   = (T>=0).*(1 - tcdf(T,df))*2 + (T<0).*(tcdf(T,df))*2;
 pval   = (pval+2*pval1)/3;
@@ -1231,6 +1237,8 @@ end
         uicontrol('Style','pushbutton','Position',[0,0,20,20],'String','E','Callback',{@editF})
         uicontrol('Style','pushbutton','Position',[0,20,20,20],'String','S','Callback',{@editF})
         uicontrol('Style','pushbutton','Position',[0,40,20,20],'String','C','Callback',{@editF})
+        uicontrol('Style','pushbutton','Position',[0,60,20,20],'String','S','Callback',{@editF})
+        uicontrol('Style','pushbutton','Position',[0,80,20,20],'String','i','Callback',{@editF})
         
 topoplot_lan(-log(pval),GLAN.chanlocs , 'shading' ,'interp' , 'style' , 'map', 'conv','on'); %caxis([0,0.2]),%shading interp;%%, 'shrink', 'force'
 % Create colorbar
