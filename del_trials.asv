@@ -88,8 +88,6 @@ pos = tr;
             end
         end
 
-        LAN.pnts=[];
-
         LAN = lan_check(LAN);
 end
 
