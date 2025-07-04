@@ -190,7 +190,9 @@ end;
 % load all data or specific data channel
 % --------------------------------------
 if strcmpi(g.check, 'on')
+   % try
     EEG = eeg_checkset(EEG);
+    %end
 end;
  if isstr(g.loadmode)
 %     if strcmpi(g.loadmode, 'all')
