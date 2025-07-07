@@ -644,7 +644,7 @@ function cartas_button_Callback(source,eventdata)
   
     COMP_CARTAS
         %
-       editF({'E','S','C','X','Y','Jet'});   
+       editF({'E','S','C','X','Y','Jet','i'});   
     % check base line
     lb_Callback(GUIbl)  
     
@@ -874,7 +874,7 @@ catch
     figure(cartasE),
 end
 %
-        editF({'E','S','C','X','Y','Jet'}); 
+        editF({'E','S','C','X','Y','Jet','i'}); 
         
  if size(pval,3) >1
      if size(pval,2)>1
@@ -928,7 +928,7 @@ catch
 end
     
     %
-    editF({'E','S','C','Jet'});
+    editF({'E','S','C','X','Y','Jet','i'});
 
     W = pcolor(GLAN.timefreq.time,GLAN.timefreq.freq(fr), double(data3)); caxis([c_axis/2]); shading interp;%flat;
     alpha(W,0.2), hold on %stat_alpha
