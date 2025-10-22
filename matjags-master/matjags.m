@@ -226,7 +226,7 @@ else % Run each chain serially
         if ispc
            cmd = sprintf( 'jags %s' , jagsScript );
         elseif ismac | isunix
-           jagsPrefix = sprintf('/usr/local/bin/');
+           jagsPrefix = sprintf(''); %%%/usr/local/bin/
            cmd = sprintf( '%sjags %s' ,jagsPrefix, jagsScript );
         end
         if verbosity > 0

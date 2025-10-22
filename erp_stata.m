@@ -435,7 +435,7 @@ else
 end
 
 
-getcfg(cfg,'lowpass',[]);
+lowpass = getcfg(cfg,'lowpass',[]);
 getcfg(cfg,'lowpass_type','fir')
 
 

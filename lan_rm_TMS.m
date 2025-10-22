@@ -12,31 +12,63 @@ function LAN = lan_rm_TMS(LAN,cfg)
 %
 % 27.10.2023 (PB) fix noise extraction errors.
 
-
-
-
-EV = getcfg(cfg,'events');     % EV = find(ifcellis(LAN.RT.OTHER.names,{'S 80','S 81','S 82','S 83','S 84'}));
-
-if iscell(EV)
-    if ischar(EV{1})
-            EV = find(ifcellis(LAN.RT.OTHER.names,EV));  
-    else     
-            pEV = LAN.RT.est==EV(1);
-            for iv = 2:length(EV)
-                pEV = pEV + LAN.RT.est==EV(iv); 
-            end
-                
-    end
+% --- Resolver cfg.events a índices de eventos (EV_idx) ---
+EV = getcfg(cfg,'events');
+if isempty(EV)
+    error('cfg.events está vacío.');
 end
+
+% Normalizar strings a cellstr
+if isstring(EV) || ischar(EV)
+    EV = cellstr(EV);
+end
+
+n_events = numel(LAN.RT.OTHER.names);
+EV_idx = [];  % salida: índices de eventos (1..n_events)
+
+if iscell(EV)  % etiquetas: {'S 80','S 81',...}
+    EV_idx = find(ifcellis(LAN.RT.OTHER.names, EV));
+
+elseif islogical(EV)  % vector lógico de longitud n_events
+    if numel(EV) ~= n_events
+        error('cfg.events lógico debe tener longitud %d.', n_events);
+    end
+    EV_idx = find(EV);
+
+elseif isnumeric(EV)
+    EV = EV(:)';  % fila
+
+    % 1) ¿Son índices válidos?
+    if all(EV==fix(EV) & EV>=1 & EV<=n_events)
+        EV_idx = EV;
+
+    % 2) Si no: ¿son códigos que viven en LAN.RT.est?
+    elseif isfield(LAN.RT,'est') && numel(LAN.RT.est)==n_events
+        mask = false(1,n_events);
+        for v = EV
+            mask = mask | (LAN.RT.est == v);
+        end
+        EV_idx = find(mask);
+
+    else
+        error(['cfg.events numérico no coincide con índices válidos ni con ', ...
+               'códigos en LAN.RT.est.']);
+    end
+
+else
+    error('Tipo de cfg.events no soportado.');
+end
+
+EV=EV_idx;
 
 P.remp = getcfg(cfg,'times');  %  [-0.0025 0.015];
 npulse = getcfg(cfg,'npulse',5); 
 rm = getcfg(cfg,'rm',true); 
 seg = getcfg(cfg,'seg',false); 
-edge = getcfg(cfg,'edge',0.1);
-time_lim = getcfg(cfg,'time_lim',[]);
+edge = getcfg(cfg,'edge',0.5);
+time_lim = getcfg(cfg,'time_lim',10);
 noise_extract =getcfg(cfg,'noise_extract',[]); 
-
+interpol = getcfg(cfg,'interpol','pchip');
 
 if isempty(noise_extract)
     ifnoise = false;
@@ -52,11 +84,11 @@ edge = edge*LAN.srate;
 if isempty(time_lim)
     time_lim=Inf;
 else
-    time_lim=time_lim*1000;
+    time_lim=time_lim*LAN.srate;
 end
 
 %
-for e = 1:LAN.nbchan;
+for e = 1:LAN.nbchan
     %e=50
     disp(e)
     %nmod = fix(n_mod*(0.5 + rand(1)/2));
@@ -68,7 +100,7 @@ n_ica = 1;
 nfix=0;
 %uno_laten = LAN.RT.laten(EV(1));
 %dosf=0;
- for  evs_l = 1:length(EV);%
+ for  evs_l = 1:length(EV)%
      evs=EV(evs_l);
     
      laten_e = fix( laten_r + (LAN.RT.laten(evs)) * (LAN.srate/1000));
@@ -79,7 +111,7 @@ nfix=0;
      if ( mod(evs_l+nfix,npulse)==0 )   || evs_l==length(EV)   || ((LAN.RT.laten(EV(evs_l+1)) - LAN.RT.laten(evs))>time_lim)
         
         % if ((LAN.RT.laten(evs) - uno_laten)>time_lim)
-          if mod(evs_l+nfix,npulse)>0;
+          if mod(evs_l+nfix,npulse)>0
              nnpulse = npulse - (npulse-mod(evs_l+nfix,npulse));
              nfix = nfix + (npulse-mod(evs_l+nfix,npulse));
              %dosf=1;
@@ -88,10 +120,10 @@ nfix=0;
          else
              
              nnpulse=npulse;
-             %dosf=0; 
-             %if evs_l<length(EV)
+             % dosf=0; 
+             % if evs_l<length(EV)
              %   uno_laten = LAN.RT.laten(EV(evs_l-1));
-            %end
+             % end
           end
          
          
@@ -109,7 +141,7 @@ nfix=0;
              %for noise segment less that oririnal TMS periord  
              tmp_noise = tmp_noise(1:numel(tmp_noise_ori));
              ind_nan = isnan(tmp_noise);
-             tmp_noise = interpolate_nans(tmp_noise) - tmp_noise_ori;
+             tmp_noise = interpolate_nans2(tmp_noise,'method', interpol) - tmp_noise_ori;
              tmp_noise = tmp_noise(ind_nan);
          end 
 
@@ -126,7 +158,7 @@ nfix=0;
          
          if rm
              ind_nan = isnan(dt);    
-             dt = interpolate_nans(dt);
+             dt = interpolate_nans2(dt,'method', interpol);
 
              if ifnoise
                 nr = ceil(numel(ind_nan) / numel(tmp_noise));

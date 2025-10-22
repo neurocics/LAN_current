@@ -286,7 +286,7 @@ end
 %--
 
 % mean electrods of interes 
-mean_eoi = getcfg(cfg,'mean_eoi',[]);
+mean_eoi = getcfg(cfg,'mean_eoi',[]); % esto no esta implementado  
 
 
 

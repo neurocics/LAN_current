@@ -112,7 +112,7 @@ if ss>0
     brain_mesh.vertices = tess_smooth_bs(brain_mesh.vertices, ss, SurfSmoothIterations , VertConn, 1); 
 end
 if  ~add_electrode
-whitebg(gcf,background);
+%whitebg(gcf,background);
 brain_mesh.vertices =  brain_mesh.vertices * scale; 
 
 p=patch(brain_mesh);
