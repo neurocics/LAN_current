@@ -60,7 +60,7 @@ for nt = 1:LAN.trials
         est(ns) = LAN.RT.est(nt);
         OTHER.seg_org(ns)=ns;
         OTHER.n_subseg(ns)=s;
-        laten(ns)= (sel(s)*(1/LAN.srate) + time(nt,1))*1000;
+        laten(ns)= (sel(s)*(1/LAN.srate) + LAN.time(nt,1))*1000;
 
 
     end
@@ -82,11 +82,21 @@ if ~isempty(seg_time)
     % resegment in seg_time fragment
     nsegment = {};
     ptimefinal = [];
+    est_all=[];
+    laten_all=[];
     for s = 1:ns
         if size(segment{s},2)>= np;
             [paso, pt] = resegment(segment{s},np, ptime(s),op);
-            nsegment = { nsegment{:} , paso{:} };
+            nsegment = [ nsegment(:)' , paso(:)' ];
+            est_all = [est_all(:)' , repmat(est(s), [ 1 , length(paso)]) ];
+            %est_all = [est_all(:)' , repmat(est(s), [ 1 , length(paso)]) ];
+            times_ms = ((pt-np)/LAN.srate)*1000 + laten(ns) ; 
+            laten_all = [laten_all(:)' , times_ms(:)' ];
+            OTHER.seg_org_all = [seg_org_all(:)' ,  repmat(OTHER.seg_org(ns), [ 1 , length(paso)]) ] ;
+            OTHER.subseg_org_all = [subseg_org_all(:)' ,  repmat(OTHER.n_subseg(ns), [ 1 , length(paso)]) ] ; % OTHER.n_subseg(ns);
+            OTHER.subsubsed_org_all = [subsubseg_org_all(:)' , 1:length(paso)];
             ptimefinal = [ptimefinal pt];
+
         end
     end
     
@@ -103,11 +113,11 @@ LAN = rmfield(LAN,'accept');
 LAN = rmfield(LAN,'correct');
 LAN = rmfield(LAN,'tag');
 
-LAN.RT.est =est;
+LAN.RT.est =est_all;
 LAN.RT.OTHER = OTHER;
-LAN.RT.laten=laten;
-LAN.RT.latency=laten;
-LAN.RT =rt_check(RT);
+LAN.RT.laten=laten_all;
+LAN.RT.latency=laten_all;
+LAN.RT =rt_check(LAN.RT);
 
 
 
