@@ -1,6 +1,6 @@
 function LAN = lan_segment_selected(LAN,seg_time,overlap)
 % <??LAN)<] toolbox
-% v.0.3
+% v.0.4
 %
 % Segment a continuos recording of previous segemnted recording in
 % selected araes.
@@ -10,6 +10,7 @@ function LAN = lan_segment_selected(LAN,seg_time,overlap)
 %
 % Pablo Billeke
 
+% 22.10.2025  addind RT for segmentations
 % 20.03.2022 add overlaping 
 % 28.04.2020 fixed multiples trials segmentation 
 % 17.01.2013
@@ -26,6 +27,15 @@ ns = 0;
 
 % al finalizar esta iteraci??n, todos los segmentos no rechazados se
 % conservan separadamente en {segment}
+if isfield(LAN, "RT") && length(LAN.RT.est)==length(LAN.data)
+    save_rt=true;
+else
+    save_rt=false;
+end
+
+
+
+
 for nt = 1:LAN.trials
     % FIXED!!!
     % % NOTA AL DESARROLLADOR : esto no est?? realmente funcionando para
@@ -46,6 +56,13 @@ for nt = 1:LAN.trials
     for s = 1:2:numel(sel);
         ns = ns +1;
         segment{ns} = LAN.data{nt}(:,sel(s):sel(s+1));
+        
+        est(ns) = LAN.RT.est(nt);
+        OTHER.seg_org(ns)=ns;
+        OTHER.n_subseg(ns)=s;
+        laten(ns)= (sel(s)*(1/LAN.srate) + time(nt,1))*1000;
+
+
     end
     % ACLARACION: ns (numero de segmentos: {selected}) = numel(sel) / 2
 end
@@ -85,6 +102,16 @@ LAN = rmfield(LAN,'selected');
 LAN = rmfield(LAN,'accept');
 LAN = rmfield(LAN,'correct');
 LAN = rmfield(LAN,'tag');
+
+LAN.RT.est =est;
+LAN.RT.OTHER = OTHER;
+LAN.RT.laten=laten;
+LAN.RT.latency=laten;
+LAN.RT =rt_check(RT);
+
+
+
+
 LAN = lan_check(LAN);
 LAN.time(:,3) = ptimefinal;
 end
