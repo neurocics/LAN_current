@@ -58,9 +58,11 @@ for nt = 1:LAN.trials
         segment{ns} = LAN.data{nt}(:,sel(s):sel(s+1));
         
         est(ns) = LAN.RT.est(nt);
+        rt(ns) = LAN.RT.rt(nt);
+        resp(ns) = LAN.RT.resp(nt);
         OTHER.seg_org(ns)=ns;
         OTHER.n_subseg(ns)=s;
-        laten(ns)= (sel(s)*(1/LAN.srate) + LAN.time(nt,1))*1000;
+        laten(ns)= (sel(s)*(1/LAN.srate)*1000 + LAN.RT.laten(nt));
 
 
     end
@@ -84,6 +86,11 @@ if ~isempty(seg_time)
     ptimefinal = [];
     est_all=[];
     laten_all=[];
+    rt_all=[];
+    resp_all=[];
+    OTHER.seg_org_all = [];
+    OTHER.subseg_org_all = [];
+    OTHER.subsubseg_org_all = [];
     for s = 1:ns
         if size(segment{s},2)>= np;
             [paso, pt] = resegment(segment{s},np, ptime(s),op);
@@ -92,9 +99,11 @@ if ~isempty(seg_time)
             %est_all = [est_all(:)' , repmat(est(s), [ 1 , length(paso)]) ];
             times_ms = ((pt-np)/LAN.srate)*1000 + laten(ns) ; 
             laten_all = [laten_all(:)' , times_ms(:)' ];
-            OTHER.seg_org_all = [seg_org_all(:)' ,  repmat(OTHER.seg_org(ns), [ 1 , length(paso)]) ] ;
-            OTHER.subseg_org_all = [subseg_org_all(:)' ,  repmat(OTHER.n_subseg(ns), [ 1 , length(paso)]) ] ; % OTHER.n_subseg(ns);
-            OTHER.subsubsed_org_all = [subsubseg_org_all(:)' , 1:length(paso)];
+            OTHER.seg_org_all = [OTHER.seg_org_all(:)' ,  repmat(OTHER.seg_org(ns), [ 1 , length(paso)]) ] ;
+            OTHER.subseg_org_all = [OTHER.subseg_org_all(:)' ,  repmat(OTHER.n_subseg(ns), [ 1 , length(paso)]) ] ; % OTHER.n_subseg(ns);
+            OTHER.subsubseg_org_all = [OTHER.subsubseg_org_all(:)' , 1:length(paso)];
+            rt_all = [rt_all(:)' ,  repmat(rt(ns), [ 1 , length(paso)]) ] ;
+            resp_all = [resp_all(:)' ,  repmat(resp(ns), [ 1 , length(paso)]) ] ;
             ptimefinal = [ptimefinal pt];
 
         end
@@ -114,6 +123,8 @@ LAN = rmfield(LAN,'correct');
 LAN = rmfield(LAN,'tag');
 
 LAN.RT.est =est_all;
+LAN.RT.rt =rt_all;
+LAN.RT.resp =resp_all;
 LAN.RT.OTHER = OTHER;
 LAN.RT.laten=laten_all;
 LAN.RT.latency=laten_all;
