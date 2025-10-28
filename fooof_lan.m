@@ -32,7 +32,7 @@ clear fractal original
 %     cfg.pad           = 8; %4
 %     cfg.tapsmofrq     = 4; %2
 cfg.method        = 'mtmfft';
-cfg.output        = 'fooof_aperiodic';
+cfg.output        = 'fooof';
 fractal = ft_freqanalysis(cfg, datos);
 cfg.output        = 'pow';
 original = ft_freqanalysis(cfg, datos);
