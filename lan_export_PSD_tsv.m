@@ -164,4 +164,66 @@ function T = lan_export_PSD_tsv(LAN, cfg)
     writetable(T, outfile, 'FileType', 'text', 'Delimiter', '\t');
 
     fprintf('lan_export_freq_tsv: archivo guardado en:\n  %s\n', outfile);
+
+    %-----------------------------
+    % 8) Generar archivo .json con descripción de columnas
+    %-----------------------------
+    meta = struct();
+    meta.description = 'Power spectral density export (trial x channel) for R/JAGS';
+    meta.subject = struct( ...
+        'column', 'subject', ...
+        'description', 'Subject identifier taken from LAN.name', ...
+        'type', 'string');
+
+    meta.trial = struct( ...
+        'column', 'trial', ...
+        'description', 'Trial index (1-based)', ...
+        'type', 'integer');
+
+    meta.accepted = struct( ...
+        'column', 'accepted', ...
+        'description', 'Trial acceptance flag from LAN.accept (1=accepted, 0=rejected)', ...
+        'type', 'integer');
+
+    meta.chan = struct( ...
+        'column', 'chan', ...
+        'description', 'Channel index (1-based, position in LAN.chanlocs)', ...
+        'type', 'integer');
+
+    meta.chan_label = struct( ...
+        'column', 'chan_label', ...
+        'description', 'Channel name from LAN.chanlocs.labels', ...
+        'type', 'string');
+
+    % Información de las columnas de frecuencia
+    freq_cols = struct('column', {}, 'frequency_hz', {}, 'description', {});
+    for k = 1:nFreq_sel
+        freq_cols(k).column = freq_varnames{k};
+        freq_cols(k).frequency_hz = freq_sel(k);
+        freq_cols(k).description = 'Power spectral density value at this frequency';
+    end
+    meta.frequency_columns = freq_cols;
+
+    % Rango global de frecuencias
+    meta.freq_range_hz = [cfg.fmin, cfg.fmax];
+
+    % Nombre del .json (mismo base que el .tsv)
+    [~, baseName, ~] = fileparts(outfile);
+    json_file = fullfile(cfg.outdir, [baseName '.json']);
+
+    json_str = jsonencode(meta);
+
+    fid = fopen(json_file, 'w');
+    if fid == -1
+        warning('No se pudo crear el archivo JSON: %s', json_file);
+    else
+        fprintf(fid, '%s', json_str);
+        fclose(fid);
+        fprintf('Metadata JSON guardado en:\n  %s\n', json_file);
+    end
+
+
+
+
+
 end
