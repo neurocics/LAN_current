@@ -1,7 +1,8 @@
 function RT = rt_check(RT,cfg)
 % <*LAN)<] toolbox
-% v.1.2
+% v.1.3
 %
+% 20.11.2025 rt resp empty cases 
 % 12.12.2023 rt / response -99 if empty 
 % 22.03.2022 .good 
 % 11.12.2014 .est .rt .resp MUST BE MATRIX 
@@ -28,6 +29,9 @@ if ~isfield(RT,'rt')
     RT.rt = ones(size(RT.est))*-99;
 elseif iscell(RT.rt)% MUST BE MATRIX 
     RT.rt = cell2mat(RT.rt);
+elseif (isempty(RT.rt) && ~isempty(RT.est)) || (numel(RT.est)~=numel(RT.rt))
+    RT.rt = ones(size(RT.est))*-99;
+    warning('Reaction time vector turned to -99 for consistency');
 end
 
 % RT
@@ -35,6 +39,10 @@ if ~isfield(RT,'resp')
     RT.resp = ones(size(RT.est))*-99;
 elseif iscell(RT.resp)% MUST BE MATRIX 
     RT.resp = cell2mat(RT.resp);
+elseif (isempty(RT.resp) && ~isempty(RT.est)) || (numel(RT.est)~=numel(RT.resp))
+    RT.resp = ones(size(RT.est))*-99;
+    warning('Responce vector turned to -99 for consistency');
+    
 end
 
 

@@ -1,5 +1,5 @@
 function LAN = fourierp_lan(LAN,cfg)
-%            v.0.2
+%            v.0.3
 %           <*LAN)<|    version
 %  cfg.
 %       chn = numero del canal
@@ -11,6 +11,7 @@ function LAN = fourierp_lan(LAN,cfg)
 %
 %  Javier Lopez Calderon
 %  Pablo Billeke
+% 26.11.2025 (PB) save FT
 % 21.03.2022 (PB) fix empty trials 
 % 09.04.2012 (PB) change name for compatibilty LAN ~ ERPLAN
 % 24.07.2011 (PB)
@@ -103,7 +104,7 @@ else
                 y = LAN.data(ch,:,i);
             end
             if mt
-                [Y f]=mtspectrumc_lan(y',cfg);
+                [Y f ]=mtspectrumc_lan(y',cfg);
             else
                 Y = fft(y,NFFT)/L;
                 Y = Y(1:NFFT/2);
@@ -113,6 +114,7 @@ else
         
         
         data(ch,:,:) = permute(ffterp,[2,1]) ;
+        FT(ch,:,:) = permute(Y,[2,1]) ;
         avgfft(ch,:) = mean(ffterp,1);
         stdfft(ch,:) = std(ffterp,1);
         lslog(ch,:) = log10(avgfft(ch,:)+stdfft(ch,:));
@@ -135,6 +137,7 @@ else
     end
     
     LAN.freq.fourierp.data = data;
+    LAN.freq.fourierp.ft = FT;
     LAN.freq.fourierp.mean = avgfft;
     LAN.freq.fourierp.std = stdfft;
     LAN.freq.fourierp.freq=f;

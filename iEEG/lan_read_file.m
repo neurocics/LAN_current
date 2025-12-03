@@ -115,16 +115,19 @@ switch type
               end
               n=n+1;
           end
+          if exist('RT','var')
           cod = unique(RT.label);
           RT.est = zeros(size(RT.label));
           for i = 1:length(cod);
              RT.est(ifcellis(RT.label,cod{i})) = i; 
           end
+          RT.OTHER.names=RT.label;
+          end
         %else
         %RT.est = ({EVENT(si).value});
         %end
         RT.laten = 1000*(cell2mat({EVENT(si).sample})/HEADER.Fs);
-        RT.OTHER.names=RT.label;
+        
         LAN.RT = rt_check(RT);
         %----------------------
 
