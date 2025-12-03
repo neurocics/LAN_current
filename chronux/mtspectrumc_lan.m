@@ -65,4 +65,4 @@ if trialave; S=squeeze(mean(S,2));end;
 if nargout==3; 
    Serr=specerr(S,J,err,trialave);
 end;
-J=squeeze(mean(J));
+J=squeeze(mean(J,2));
