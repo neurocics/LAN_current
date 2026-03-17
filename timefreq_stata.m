@@ -866,7 +866,7 @@ if ifstata && ~mdif && ~no1_st
             cfg.method = 'rank';
             %[pval, hh, stat] = nonparametric(a,[],alpha,m,0,texto);
             [pval, stat] = lan_nonparametric(a,cfg);
-        case {'glm','robust', 'mle'}
+        case {'glm','robust', 'lme'}
             cfgM=[];
             cfgM.type = stata ; %'glm'; % , 'robust', 'lme' % -------------------------------------------------------
             cfgM.ops = ['pre(Second Level ' stata    ' MODEL)' ];

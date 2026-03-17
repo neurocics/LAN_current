@@ -1379,9 +1379,12 @@ end
 
     function COMP_topocond
        if exist('topocond')==1
-       try  tc_pc=close_i(topocond) ; end
+       try  tc_pc=close_i(topocond) ; 
+       catch
+         tc_pc =[1   fix(1.3*scrsz(4)/6)       fix(scrsz(3)/2) fix(3*scrsz(4)/6) ];
+       end
        else
-       %Pe =[1   fix(1.3*scrsz(4)/6)       fix(scrsz(3)/2) fix(3*scrsz(4)/6) ];
+       tc_pc =[1   fix(1.3*scrsz(4)/6)       fix(scrsz(3)/2) fix(3*scrsz(4)/6) ];
        end
        topocond = figure('Visible','on','Position',tc_pc,...
        'Name','topoplot TF','NumberTitle','off','MenuBar', 'none','CloseRequestFcn',@close_i);
