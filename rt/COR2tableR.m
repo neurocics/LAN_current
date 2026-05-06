@@ -3,6 +3,7 @@ function COR2tableR(COR,cfg)
 %    v.0.5
 %
 % COR2TABLER write a table for R in a .txt file (one file per electrode)
+% COR2TABLER(COR,'filename') 
 % COR2TABLER(COR,cfg) 
 %       cfg.where           carpeta
 %       cfg.filename        nombre del archivo
@@ -12,7 +13,7 @@ function COR2tableR(COR,cfg)
 %       cfg.units = 's'
 %
 %       if COR is empty, is necesary defined:
-%
+% COR2TABLER(COR) 
 %       cfg.subject = {} {} ; nombre de sujetos
 %       cfg.namefile = '%S\COR'
 %       cfg.namemat  = 'COR' 
@@ -39,6 +40,13 @@ elseif nargin == 1;
 cfg.format = 'tsv';
 %cfg.name = 'TABLE.cvs'
 end
+
+if ischar(cfg)
+    filename=cfg;
+    cfg=[];
+    cfg.filename=filename;
+end
+
 
 units = getcfg(cfg,'units','s');
 switch units
