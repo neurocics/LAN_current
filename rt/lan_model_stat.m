@@ -106,7 +106,7 @@ switch ntype
     for p = 1:np
     bar_wait(p,np,ops,texto);
     % no perform regretion with NaNs    
-    if any(isnan(y(p,:)))   
+    if any(isnan(y(p,:))) ||  nnz(y(p,:))<(numel(y(p,:))/2)  % check !!
         continue
     end
     
