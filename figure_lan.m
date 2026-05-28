@@ -1,6 +1,6 @@
 function H = figure_lan(name,ops)
 if nargin<2
-ops={'E','S','C','X','Y','Jet'};
+ops={'E','S','C','X','Y','Jet','i'};
 end
 if nargin <1
     name=[];
