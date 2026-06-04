@@ -411,6 +411,7 @@ if ~isfield(LAN, 'tag')
       LAN.tag.mat = zeros(LAN.nbchan,LAN.trials);
       LAN.tag.labels = [];
 else %
+
     
     if size(LAN.tag.mat,1) ~= LAN.nbchan
        warning('LAN: bad asigned tag matrix, Set all to zeros !!') 
