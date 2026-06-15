@@ -128,6 +128,7 @@ jagsModel = [ jagsModelBase modelextension ];
 % get the current directory
 curdir = pwd;
 cd( whdir );
+
 %[status,result] = dos( 'dir' )
 
 % Does the temporary directory exist? If not, create it

@@ -213,7 +213,8 @@ switch cfg.type
        getcfg(cfg,'c_est') 
        getcfg(cfg,'c_time')
        %getcfg(cfg,'c_other',[]);
-       unit = 1; %  ms      
+       getcfg(cfg,'unit',1);
+       %unit = 1; %  ms      
 end
         
 getcfg(cfg,'c_other',[]);        
@@ -307,7 +308,7 @@ switch cfg.type
     %-:% presentation, file *.log 
     case {'Table','table'}
         if ~ isfield(cfg,'table') &&  isfield(cfg,'filename') 
-            cfg.table = evalin(cfg.filename);
+            cfg.table = evalin('caller', cfg.filename);
         end
             
         data = [ cfg.table{:,c_est}  cfg.table{:,c_time}  cfg.table{:,c_est}  ] ;
