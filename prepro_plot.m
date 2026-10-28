@@ -1,5 +1,5 @@
 function prepro_plot(LAN)
-%         v.0.5
+%         v.1
 %
 %         GUI para realizar prepocesamiento de matrices segemnnatadas
 %             tambien sirve de visualizaci??n para datos continuos 
@@ -8,6 +8,12 @@ function prepro_plot(LAN)
 %  See Also VOL_THR_LAN , LAN_INTERP , FFTAMP_THR_LAN
 %
 %  Pablo Billeke
+%  28.10.2026 (PB-IA) Add PSD interquartile band (P25-P75) across trials.
+%                    Add ICA component PSD (Welch) to aid artifact
+%                    inspection; preserve accepted-trial ICA views.
+%                    Improved figure and axes management, fixed graphical
+%                    rendering and refresh issues, and corrected ICA
+%                    component navigation.
 %  18.04.2022 (PB) Bug ICA visualization with empty trials
 %  22.03.2022 (PB) Bug ICA for a only EEG channels
 %  27.02.2022 (PB) fix n_detec option  
@@ -134,6 +140,8 @@ global see_ica
 
 global guirt
 global axrt
+global channelTextHandles
+channelTextHandles = {};
 global ifguirt
 ifguirt = 0;
 
@@ -174,6 +182,12 @@ global axft
 global ifdataft
 ifdataft = 0;
 global dataft
+% Graphics caches are local to this GUI invocation (not LAN data).
+ftLastTrial = [];
+ftLastCond = [];
+hilLastTrial = [];
+hilLastCond = [];
+hilLastChannels = [];
 global caxis_ft
 caxis_ft = [2 10];
 global caxis_ft_gui
@@ -392,6 +406,7 @@ uicontrol('Parent',paCh ,'Units','normalized','Style','text','String','Voltage t
         paso.thr = eval(['[' get(fftA,'String') ']' ] );
         paso.frange = eval(['[' get(fftR,'String') ']' ] );
         LAN = fftamp_thr_lan(LAN,paso);
+        ifdatahil = false; ifdataft = false;
         EEGplot(cnt)
         electrode_plot()
         
@@ -541,7 +556,7 @@ function EEGplot(nt,Nlabels)
            catch
                ytl{c} = ['E:' num2str(i)];
            end
-           yt(c) = (i*sc)*(-1);
+           yt(c) = -(numel(view_chan)-c+1)*sc; % map descending labels to ascending trace offsets
        end
        
        if LAN{ncd}.trials ==1
@@ -550,7 +565,7 @@ function EEGplot(nt,Nlabels)
            ifcon=0;nC ='Trial : ';
        end
        
-       if ~ifax2
+       if ~ifax2 || ~ishghandle(ax2)
            selectP = [];
            
            ax2 = axes('Parent',EEG,...
@@ -560,8 +575,8 @@ function EEGplot(nt,Nlabels)
            ifax2=true;
        end
        
-       if ~ifax
-           
+       if ~ifax || ~ishghandle(ax)
+           ifax = 0;
            if ifcon
                n_ini = 1 ;
                l_seg = LAN{ncd}.srate;
@@ -569,10 +584,6 @@ function EEGplot(nt,Nlabels)
            else
                nCn = cnt;
            end
-           ax2 = axes('Parent',EEG,...
-               'Position',[0.05 0.0 0.9 0.05],...
-               'YTickLabel',[],'YTick',[],'XTickLabel',[],'XTick',[],... axes
-               'ButtonDownFcn',@C_selected);
            ax = axes('Parent',EEG,...
                'Position',[0.05 0.1  0.9 0.85],...
                'YTickLabel',ytl,'YTick',yt);
@@ -638,8 +649,8 @@ function EEGplot(nt,Nlabels)
        end
        c = 0;
        
-       set(EEG,'CurrentAxes',ax);
-       
+       cla(ax); % remove previous EEG traces and event overlays once per refresh
+       hold(ax,'on');
        for i = sort(view_chan)
            c = c +1;
            if r_elec{ncd}(i,cnt)==0
@@ -680,21 +691,21 @@ function EEGplot(nt,Nlabels)
            
            if ifcon    %con
                if view_comp
-                    plot(ltime,comp_data{1}(i,ini_p:fin_p)-(c*sc)-(nanmean(LAN{ncd}.data{1}(i,ini_p:fin_p))),'Color',color,...
-                   'LineWidth',gr), hold all
+                    plot(ax,ltime,comp_data{1}(i,ini_p:fin_p)-(c*sc)-(nanmean(LAN{ncd}.data{1}(i,ini_p:fin_p))),'Color',color,...
+                   'LineWidth',gr);
                else
-               plot(ltime,LAN{ncd}.data{1}(i,ini_p:fin_p)-(c*sc)-(nanmean(LAN{ncd}.data{1}(i,ini_p:fin_p))),'Color',color,...
-                   'LineWidth',gr), hold all
+               plot(ax,ltime,LAN{ncd}.data{1}(i,ini_p:fin_p)-(c*sc)-(nanmean(LAN{ncd}.data{1}(i,ini_p:fin_p))),'Color',color,...
+                   'LineWidth',gr);
                end
                try  color = paso;  end
                
            else    %seg
                if view_comp
-               plot(ltime,comp_data{nt}(i,:)-(c*sc)-(nanmean(LAN{ncd}.data{nt}(i,:))),'Color',color,...
-                   'LineWidth',gr), hold all                   
+               plot(ax,ltime,comp_data{nt}(i,:)-(c*sc)-(nanmean(LAN{ncd}.data{nt}(i,:))),'Color',color,...
+                   'LineWidth',gr);
                else
-               plot(ltime,LAN{ncd}.data{nt}(i,:)-(c*sc)-(nanmean(LAN{ncd}.data{nt}(i,:))),'Color',color,...
-                   'LineWidth',gr), hold all
+               plot(ax,ltime,LAN{ncd}.data{nt}(i,:)-(c*sc)-(nanmean(LAN{ncd}.data{nt}(i,:))),'Color',color,...
+                   'LineWidth',gr);
                end
                try  color = paso;  end
                
@@ -703,7 +714,7 @@ function EEGplot(nt,Nlabels)
        end
        
        
-       set(EEG,'CurrentAxes',ax);
+       % EEG axes are addressed explicitly; do not change global CurrentAxes
        
        if ifcon
            set(eegtitle,'String', num2str([ (n_ini-1) * (l_seg/LAN{ncd}.srate)  l_seg/LAN{ncd}.srate]) );
@@ -713,16 +724,16 @@ function EEGplot(nt,Nlabels)
        set(ax,'Parent',EEG,...
            ...'Position',[0.05 0.05 0.9 0.9],...
            'YTickLabel',ytl,'YTick',yt);
-       hold off
+       hold(ax,'off');
        
        
        % ejes
        if ifcon
-           xlim([   (ini_p-1)/LAN{ncd}.srate,(ini_p-1+l_seg)/LAN{ncd}.srate  ]);
+           xlim(ax,[   (ini_p-1)/LAN{ncd}.srate,(ini_p-1+l_seg)/LAN{ncd}.srate  ]);
        else
-           xlim([LAN{ncd}.time(cnt,1), LAN{ncd}.time(cnt,2)  ]);
+           xlim(ax,[LAN{ncd}.time(cnt,1), LAN{ncd}.time(cnt,2)  ]);
        end
-       ylim([ (c+1)*(-sc) 0]);
+       ylim(ax,[ (c+1)*(-sc) 0]);
        %set(EEG,'title')
        
        
@@ -730,7 +741,7 @@ function EEGplot(nt,Nlabels)
        
        
        if ~ifax
-           set(EEG,'CurrentAxes',ax);
+           % EEG axes are addressed explicitly; do not change global CurrentAxes
            c = 0;
            n = length(view_chan);
            for el = sort(view_chan)%1:LAN{ncd}.nbchan
@@ -741,10 +752,10 @@ function EEGplot(nt,Nlabels)
                    'Callback',{@no});
            end
            
-           uicontrol('Style','pushbutton','String','<','Units','normalized',...
+           uicontrol('Parent',EEG,'Style','pushbutton','String','<','Units','normalized',...
                'Position',[0.95, 0 ,0.025,0.2],... 'BackgroundColor',cf,... 'ForegroundColor',fc,...
                'Callback',{@MENOS_button_Callback});
-           uicontrol('Style','pushbutton','String','>','Units','normalized',...
+           uicontrol('Parent',EEG,'Style','pushbutton','String','>','Units','normalized',...
                'Position',[0.975, 0 ,0.025,0.2],... 'BackgroundColor',cf,... 'ForegroundColor',fc,...
                'Callback',{@MAS_button_Callback});
            if LAN{ncd}.accept(cnt)
@@ -752,35 +763,31 @@ function EEGplot(nt,Nlabels)
            else
                reval = 'Acc';
            end
-           Bra = uicontrol('Style','pushbutton','String',reval,'Units','normalized',...
+           Bra = uicontrol('Parent',EEG,'Style','pushbutton','String',reval,'Units','normalized',...
                'Position',[0.95, 0.25 ,0.05,0.1],... 'BackgroundColor',cf,... 'ForegroundColor',fc,...
                'Callback',{@REJECT_button_Callback});
            
-           uicontrol('Style','pushbutton','String','(+)','Units','normalized',...
+           uicontrol('Parent',EEG,'Style','pushbutton','String','(+)','Units','normalized',...
                'Position',[0.95, 0.4 ,0.05,0.09],... 'BackgroundColor',cf,... 'ForegroundColor',fc,...
                'Callback',{@up_button_Callback});
-           uicontrol('Style','pushbutton','String','(-)','Units','normalized',...
+           uicontrol('Parent',EEG,'Style','pushbutton','String','(-)','Units','normalized',...
                'Position',[0.95, 0.55 ,0.05,0.09],... 'BackgroundColor',cf,... 'ForegroundColor',fc,...
                'Callback',{@low_button_Callback});
-           editv =  uicontrol('Style','Edit','String',[num2str(sc) ],'Units','normalized',...
+           editv =  uicontrol('Parent',EEG,'Style','Edit','String',[num2str(sc) ],'Units','normalized',...
                'Position',[0.95, 0.71 ,0.05,0.05],... 'BackgroundColor',cf,... 'ForegroundColor',fc,...
                'Callback',{@edituv_button_Callback});
-           uicontrol('Style','Text','String',LAN{ncd}.unit ,'Units','normalized',...
+           uicontrol('Parent',EEG,'Style','Text','String',LAN{ncd}.unit ,'Units','normalized',...
                'Position',[0.95, 0.65 ,0.05,0.05]... 'BackgroundColor',cf,... 'ForegroundColor',fc,...
                );
            ifax=1;
        else
            
-           set(EEG,'CurrentAxes',ax);
+           % EEG axes are addressed explicitly; do not change global CurrentAxes
            
-              if nargin==2
-                   for el = sort(view_chan)%1:LAN{ncd}.nbchan
-                       set(elecbot{el},'String',ytl{el});
-                       %elecbot{c}= uicontrol('Parent',EEG, 'Style','pushbutton',...
-                       %    'String',ytl{c},'Units','normalized',...
-                       %    'Position',[0, (0.1 + ((0.85/n)*(c-1)) ) ,0.05,(0.85/n)],... 'BackgroundColor',cf,... 'ForegroundColor',fc,...
-                       %    'Callback',{@no});
-                   end
+              for el = 1:numel(view_chan)
+                  if ishghandle(elecbot{el})
+                      set(elecbot{el},'String',ytl{el});
+                  end
               end
            
            if LAN{ncd}.accept(cnt)
@@ -790,7 +797,7 @@ function EEGplot(nt,Nlabels)
            end
            nn = length(view_chan);
            for el=1:nn
-               if r_elec{ncd}(min(view_chan)+(el-1),cnt)==1
+               if r_elec{ncd}(view_chan(el),cnt)==1
                    set(elecbot{(nn-el+1)},'ForegroundColor','red')
                else
                    set(elecbot{(nn-el+1)},'ForegroundColor','black')
@@ -802,7 +809,7 @@ function EEGplot(nt,Nlabels)
            set(editv,'String',[num2str(sc) ]);
        end
        cla(ax2)
-       set(EEG,'CurrentAxes',ax2);
+       % Selection timeline stays on ax2 regardless of the active figure
        DIF = find(abs(diff(LAN{ncd}.selected{cnt})));
        AR = LAN{ncd}.selected{cnt}(ini_p:fin_p);
        rDIF =DIF( (DIF>=ini_p)&(DIF<=fin_p) );
@@ -818,13 +825,13 @@ function EEGplot(nt,Nlabels)
            if (AR(end)==0)&(rDIF(end)~=fin_p); Xs(end+1) = fin_p; end
            
        end
-       plot(rDIF,ones(size(rDIF)),'ro','LineWidth',2);hold on
+       plot(ax2,rDIF,ones(size(rDIF)),'ro','LineWidth',2);hold(ax2,'on')
        for pp = 1:2:length(Xs)
-           line(Xs(pp:pp+1),[1 1],'color','red','LineWidth',2);
+           line(ax2,Xs(pp:pp+1),[1 1],'color','red','LineWidth',2);
        end
-       hold off
+       hold(ax2,'off');
        %surface(double(cat(1,~LAN{ncd}.selected{cnt},~LAN{ncd}.selected{cnt}))); caxis([-0.1 1.1 ])
-       xlim([ini_p fin_p]), ylim([0 2]) ,
+       xlim(ax2,[ini_p fin_p]); ylim(ax2,[0 2]);
        %shading flat;
        %area(cat(1,LAN{ncd}.selected{cnt}(ini_p:fin_p),~LAN{ncd}.selected{cnt}(ini_p:fin_p))'); caxis([0.9 2.1 ])
        set(ax2,'Parent',EEG,...
@@ -845,6 +852,7 @@ end
 if ifguirt %)&& strcmp('on',get(GUI_HIL_plot,'Visible')) 
     GUI_RT(1);
 end
+drawnow limitrate;
 
 end
 %%----------------------------------
@@ -937,9 +945,10 @@ for i = 1:LAN{ncd}.nbchan
     %end
 end
  %size(cat(2,G',B',Y',Rd',R',Bk'))
- bar(cat(2,G',B',Y',Rd',R',Bk'),'Horizontal','on','BarLayout','stacked','Parent',barax);
- ylim([1 LAN{ncd}.nbchan])
- xlim([0 LAN{ncd}.trials])
+  cla(barax);
+  bar(barax,cat(2,G',B',Y',Rd',R',Bk'),'Horizontal','on','BarLayout','stacked');
+ ylim(barax,[1 LAN{ncd}.nbchan]);
+ xlim(barax,[0 LAN{ncd}.trials]);
 set(barax,'Parent',ELECTRODE,...
     'Position',[0.05 0.05 0.5 0.9],'CLim',[0.9 6.1],...
     'XLim',[1 LAN{ncd}.trials],...
@@ -962,6 +971,12 @@ end
 
 %i = 
 nn = length(view_chan);
+if numel(channelTextHandles) > nn
+    for kk = (nn+1):numel(channelTextHandles)
+        if ishghandle(channelTextHandles{kk}), delete(channelTextHandles{kk}); end
+    end
+    channelTextHandles = channelTextHandles(1:nn);
+end
 n = 1/(nn);
 c = nn;
 for e = sort(view_chan)
@@ -978,11 +993,14 @@ for e = sort(view_chan)
    catch
        loccc = '?'; 
    end
-   uicontrol('Parent',barax,'Style','Text', 'String', [num2str(e) ' '  LAN{ncd}.chanlocs(e).labels ': ' ...
-   loccc ...
-   paso ' ' ]...  
-   ,'Units','normalized',......
-   'Position',[0.1 (c-1)*n 0.8 n]);   
+   labelText = [num2str(e) ' ' LAN{ncd}.chanlocs(e).labels ': ' loccc paso ' '];
+   labelPos = [0.1 (c-1)*n 0.8 n];
+   if numel(channelTextHandles) >= c && ishghandle(channelTextHandles{c})
+       set(channelTextHandles{c},'String',labelText,'Position',labelPos);
+   else
+       channelTextHandles{c} = uicontrol('Parent',barax,'Style','Text',...
+           'String',labelText,'Units','normalized','Position',labelPos);
+   end
     c = c-1;
 end
 
@@ -1116,8 +1134,10 @@ else
     for nl=1:length(LAN{ncd}.tag.labels);
         try set(uilabels{nl},'String',LAN{ncd}.tag.labels{nl});end
     end
-    if iscell(GUIcb)&&ishandle(GUIcb{1})
-    for c = 1:length(LAN{ncd}.conditions.name)
+    if iscell(GUIcb) && ~isempty(GUIcb) && ...
+            ishandle(GUIcb{1}) && isfield(LAN{ncd},'conditions')
+    for c = 1:min(length(LAN{ncd}.conditions.name),numel(GUIcb))
+        if ~ishghandle(GUIcb{c}), continue; end
         if any(LAN{ncd}.conditions.ind{c}>1)
            paso = false(size(LAN{ncd}.data));
            paso(LAN{ncd}.conditions.ind{c}) = true;
@@ -1194,11 +1214,13 @@ end
         otherwise
             ncomp=eval(op);
     end
-             if ncomp <=0;
-                ncomp = LAN{ncd}.nbchan;
-             elseif ncomp >= LAN{ncd}.nbchan;
-                ncomp=1;
-             end
+    % Wrap over the ACTUAL number of ICA components (may be < nbchan).
+    nICA = size(LAN{ncd}.ica_weights,1);
+    if nICA > 0 && isnumeric(ncomp) && isscalar(ncomp) && isfinite(ncomp)
+        ncomp = mod(round(ncomp)-1,nICA)+1;
+    else
+        ncomp = 1;
+    end
     plot_comp()         
     end
 
@@ -1208,7 +1230,10 @@ end
     function plot_comp(b,bb,bbb)
         clear b bb bbb
         if isfield(LAN{ncd},'ica_weights') &&  ~isempty(LAN{ncd}.ica_weights);
-            
+            % Keep component navigation valid after changing conditions/PCA rank.
+            nICA = size(LAN{ncd}.ica_weights,1);
+            ncomp = mod(round(ncomp)-1,nICA)+1;
+
             if size(LAN{ncd}.ica_weights,1)==size(LAN{ncd}.ica_weights,2);
                 winv = inv(LAN{ncd}.ica_weights*LAN{ncd}.ica_sphere);
             else
@@ -1218,19 +1243,24 @@ end
             
             
             
-            try close(topoICA) ; end
-            topoICA = figure('Visible','on','Units','normalized',...
-               'Position',p_ica,...
-               'Name','ICA calulated','NumberTitle','off','MenuBar', 'none',...
-               'CloseRequestFcn',@close_ica...
-               );
+            if ~isempty(topoICA) && ishghandle(topoICA)
+                clf(topoICA); % reuse the same window and its position
+                set(topoICA,'Visible','on');
+            else
+                topoICA = figure('Visible','on','Units','normalized',...
+                   'Position',p_ica,...
+                   'Name','ICA calulated','NumberTitle','off','MenuBar','none',...
+                   'CloseRequestFcn',@close_ica);
+            end
+            figure(topoICA);
             editF
-            subplot('Position',[0.01 0.1 0.4 0.7] )
+            axes('Parent',topoICA,'Position',[0.01 0.1 0.4 0.7]);
             if ~isfield(LAN{ncd}, 'ica_select');
                 LAN{ncd}.ica_select = 1:LAN{ncd}.nbchan;
             end
                 
                 
+            figure(topoICA); % topoplot_lan draws into gca
             topoplot_lan(winv(:,ncomp),LAN{ncd}.chanlocs(LAN{ncd}.ica_select));
             uicontrol(topoICA,'Style','pushbutton','String','<','Units','normalized',...
                       'Position',[0.05, 0.85 ,0.1,0.15],...'BackgroundColor',bc,'ForegroundColor',fc,...
@@ -1252,7 +1282,7 @@ end
                   
                   
                   
-            subplot('Position',[0.5 0.2 0.4 0.4] ) 
+            axICATrials = axes('Parent',topoICA,'Position',[0.54 0.31 0.40 0.26]);
             %if strcmp( get(electrode_comp,'String') ,'Showing: electrodes')
                 W = LAN{ncd}.ica_weights*LAN{ncd}.ica_sphere;
             %else
@@ -1261,11 +1291,20 @@ end
                 for t =1:LAN{ncd}.trials
                     if LAN{ncd}.accept(t)
                     D{t} = (LAN{ncd}.data{t} - repmat( mean(LAN{ncd}.data{t},2),[ 1 length(LAN{ncd}.data{t})])  ); 
-                    D{t} = W*D{t}(LAN{ncd}.ica_select,:); 
+                    % Only project the displayed ICA component. This is
+                    % equivalent to selecting row ncomp of W*D, but avoids
+                    % materializing every component for every accepted trial.
+                    D{t} = W(ncomp,:)*D{t}(LAN{ncd}.ica_select,:);
                     end
                 end
                 Tm = timelan(LAN{ncd});
-                
+
+                % PSD from each accepted trial BEFORE the epoch-length crop.
+                % Use the original activation saved by LAN when a component
+                % has already been removed (LAN.ica_del_comp).
+                [psdHz,psdDB,psdN,psdWinSec,psdP25,psdP75] = ...
+                    ICA_component_PSD(D,LAN{ncd},ncomp);
+
                 % min time por trial with diferent duration 
                 min_p = fix(min((LAN{ncd}.time(LAN{ncd}.accept,2) - LAN{ncd}.time(LAN{ncd}.accept,1) )* LAN{ncd}.srate));
                 for  t =1:LAN{ncd}.trials
@@ -1279,20 +1318,147 @@ end
                 D = cat(3,LAN{ncd}.ica_del_comp{LAN{ncd}.accept});    
                 D = D(LAN{ncd}.ica_del==ncomp,1:min_p,:);
                 else
-                D = D(ncomp,:,:);    
+                D = D(1,:,:); % already selected component ncomp
                 end
-                pcolor2(Tm,1:size(D,3),squeeze(D)');shading flat
-            subplot('Position',[0.5 0.1 0.4 0.1] ) 
-                plot(Tm,squeeze(mean(D,3)));
-                xlim([Tm(1) Tm(end)]);
-            %D = 
-            %pcolor2(   )
+                axes(axICATrials);  % pcolor2 uses the active axes
+                pcolor2(Tm,1:size(D,3),squeeze(D)');
+                shading(axICATrials,'flat');
+            axICAMean = axes('Parent',topoICA,'Position',[0.54 0.10 0.40 0.12]);
+                plot(axICAMean,Tm,squeeze(mean(D,3)));
+                xlim(axICAMean,[Tm(1) Tm(end)]);
+
+            % Component power spectrum: same accepted trials as the raster.
+            % Dedicated axes prevent the PSD from overwriting EEG/ICA panels.
+            axICAPSD = axes('Parent',topoICA,'Position',[0.54 0.68 0.40 0.23]);
+            if ~isempty(psdHz)
+                psdColor = [0.1 0.35 0.65];
+                % The IQR describes trial-to-trial variability in dB/Hz.
+                % Draw it first, behind the original mean-power PSD curve.
+                if psdN >= 2 && ~isempty(psdP25) && ~isempty(psdP75)
+                    patch('Parent',axICAPSD, ...
+                        'XData',[psdHz(:); flipud(psdHz(:))], ...
+                        'YData',[psdP25(:); flipud(psdP75(:))], ...
+                        'FaceColor',psdColor,'FaceAlpha',0.20, ...
+                        'EdgeColor','none','HitTest','off');
+                    hold(axICAPSD,'on');
+                end
+                plot(axICAPSD,psdHz,psdDB,'LineWidth',1.2, ...
+                    'Color',psdColor);
+                hold(axICAPSD,'off');
+                xlim(axICAPSD,[1 min(45, LAN{ncd}.srate/2)]);
+                title(axICAPSD,sprintf('PSD mean + P25-P75 | %d trials | %.2f s', ...
+                    psdN,psdWinSec),'FontSize',9);
+            else
+                text(0.5,0.5,'PSD unavailable (insufficient data or pwelch missing)', ...
+                    'Parent',axICAPSD,'Units','normalized', ...
+                    'HorizontalAlignment','center','FontSize',8);
+                xlim(axICAPSD,[0 1]);
+                ylim(axICAPSD,[0 1]);
+            end
+            xlabel(axICAPSD,'Frequency (Hz)');
+            ylabel(axICAPSD,'Power (dB/Hz)');
+            grid(axICAPSD,'on');
             
                   
         else
             warning('Not ICA components computed!!')
         end
         
+    end
+
+    % PSD averaged across accepted trials (never concatenating trials).
+    % The ICA scale is arbitrary, so interpret spectral SHAPE rather than
+    % absolute levels when comparing different components.
+    function [freqShow,powerDB,nUsed,winSeconds,p25DB,p75DB] = ICA_component_PSD(Dtrials,lanICA,compIndex)
+        freqShow = [];
+        powerDB = [];
+        p25DB = [];
+        p75DB = [];
+        nUsed = 0;
+        winSeconds = NaN;
+
+        if exist('pwelch','file') == 0 || ...
+                ~isfield(lanICA,'srate') || lanICA.srate <= 2
+            return;
+        end
+
+        fsICA = lanICA.srate;
+        accepted = find(logical(lanICA.accept));
+        signals = cell(1,numel(accepted));
+        keep = false(1,numel(accepted));
+        delIndex = [];
+        if isfield(lanICA,'ica_del')
+            delIndex = find(lanICA.ica_del == compIndex,1);
+        end
+
+        for k = 1:numel(accepted)
+            t = accepted(k);
+            if ~isempty(delIndex) && isfield(lanICA,'ica_del_comp') && ...
+                    t <= numel(lanICA.ica_del_comp) && ...
+                    ~isempty(lanICA.ica_del_comp{t})
+                x = lanICA.ica_del_comp{t}(delIndex,:);
+            elseif ~isempty(delIndex)
+                % No stored original waveform: do not use residual data.
+                continue;
+            elseif t <= numel(Dtrials) && ~isempty(Dtrials{t})
+                x = Dtrials{t}(1,:); % single displayed component
+            else
+                continue;
+            end
+            x = double(x(:));
+            if numel(x) < 16 || any(~isfinite(x))
+                continue;
+            end
+            signals{k} = x;
+            keep(k) = true;
+        end
+        signals = signals(keep);
+        if isempty(signals)
+            return;
+        end
+
+        % Common window for comparable trial PSD estimates (2 s maximum).
+        lengths = cellfun(@numel,signals);
+        winN = min([max(16,round(2*fsICA)), lengths]);
+        if winN < 16
+            return;
+        end
+        winSeconds = winN/fsICA;
+        win = hamming(winN);
+        overlap = floor(winN/2);
+        nfft = max(256,2^nextpow2(winN));
+        powerSum = [];
+        powerByTrial = [];
+        freqs = [];
+        for k = 1:numel(signals)
+            % Demeaning prevents DC offsets from obscuring the spectrum.
+            signal = signals{k} - mean(signals{k});
+            [p,f] = pwelch(signal,win,overlap,nfft,fsICA);
+            if isempty(powerSum)
+                powerSum = zeros(size(p));
+                powerByTrial = zeros(numel(p),numel(signals));
+                freqs = f;
+            end
+            powerSum = powerSum + p;
+            powerByTrial(:,k) = p;
+            nUsed = nUsed + 1;
+        end
+        limHz = min(45,fsICA/2);
+        show = freqs >= 1 & freqs <= limHz;
+        if ~any(show)
+            nUsed = 0;
+            return;
+        end
+        freqShow = freqs(show);
+        % Preserve the original PSD: average linear power, then convert to dB.
+        powerDB = 10*log10(max(powerSum(show)/nUsed,realmin));
+        if nUsed >= 2
+            % Percentiles are calculated across trials at each frequency,
+            % on the same log-power scale displayed by the PSD axes.
+            powerTrialsDB = 10*log10(max(powerByTrial(show,:),realmin));
+            p25DB = prctile(powerTrialsDB,25,2);
+            p75DB = prctile(powerTrialsDB,75,2);
+        end
     end
 
     function close_ica(b, bb, bbb)
@@ -1351,6 +1517,7 @@ end
           end
             ind_x = eval([ '[' get( compE, 'String') '];']);
             LAN{ncd} = lan_rm_chan(LAN{ncd}, ind_x,'ica');
+        ifdatahil = false; ifdataft = false;
             set(compE,'String',['[' num2str(sort(LAN{ncd}.ica_del)) ']'])
           EEGplot(cnt)
     %Nlabels 
@@ -1362,8 +1529,10 @@ end
 %  FT plot com
 %-------------------
     function FT_CON(b,bb,bbb)
-        if b==1
-           ifdataft = true;
+        if isequal(b,1)
+           % Reuse the spectrogram only while the same trial is displayed.
+           ifdataft = logical(ifdataft) && isequal(ftLastTrial,cnt) && ...
+                      isequal(ftLastCond,ncd);
         else
            ifdataft = false; 
         end
@@ -1413,6 +1582,8 @@ end
                dataft = 10*(log10(dataft)-repmat(log10(mean_nonan(dataft,2)),[1,size(dataft,2)]));              
            end
            ifdataft = true;
+           ftLastTrial = cnt;
+           ftLastCond = ncd;
            clear dataN
         end
         
@@ -1427,44 +1598,33 @@ end
         else
             serietime = 1:length(LAN{ncd}.freq.time);%(0:LAN{ncd}.pnts(nt)-1)+LAN{ncd}.time(nt,3);
         end
-        if ~ifaxft % crear eje
+        if ~ifaxft || ~ishghandle(axft)
             axft = axes('Parent',GUI_FT_CON,...
-                'Position',[0.05 0.1 0.9 0.85]...
-                );
-            
-            pcolor(LAN{ncd}.freq.time(serietime), ... time
-                LAN{ncd}.freq.freq, ...
-                double(squeeze(dataft(:,serietime))));
-            
-            ylabel('Frequency(Hz)'),xlabel('Time(Second)')
-            
-            shading interp, colormap(hot(200)), caxis(axft, caxis_ft)
-            %title(M)
-            
-            caxis_ft_gui =  uicontrol('Parent',GUI_FT_CON,'Style','Edit','String',num2str([caxis_ft]),'Units','normalized',...
-                  'Position',[0.95, 0.5 ,0.05,0.1],... 'BackgroundColor',cf,... 'ForegroundColor',fc,...
-                  'Callback',{@caxis_ft_edt});
-           norm_ft_gui =  uicontrol('Parent',GUI_FT_CON,'Style','popup','String',{'z','dB','e','log10(e)'},'Units','normalized',...
-                  'Position',[0.95, 0.61 ,0.05,0.1],... 'BackgroundColor',cf,... 'ForegroundColor',fc,...
-                  'Callback',{@nor_ft_edt}); 
-            uicontrol('Parent',GUI_FT_CON,'Style','edit','String',num2str(nsmooth),'Units','normalized',...
-                  'Position',[0.95, 0.71 ,0.05,0.09],... 'BackgroundColor',cf,... 'ForegroundColor',fc,...
-                  'Callback',{@smooth_ft_edt}); 
-             uicontrol('Parent',GUI_FT_CON,'Style','text','String','smooth','Units','normalized',...
-                  'Position',[0.95, 0.81 ,0.05,0.09]);  
+                'Position',[0.05 0.1 0.9 0.85]);
+            caxis_ft_gui = uicontrol('Parent',GUI_FT_CON,'Style','Edit',...
+                'String',num2str(caxis_ft),'Units','normalized',...
+                'Position',[0.95 0.5 0.05 0.1],'Callback',@caxis_ft_edt);
+            uicontrol('Parent',GUI_FT_CON,'Style','popup',...
+                'String',{'z','dB','e','log10(e)'},'Units','normalized',...
+                'Position',[0.95 0.61 0.05 0.1],'Callback',@nor_ft_edt);
+            uicontrol('Parent',GUI_FT_CON,'Style','edit','String',num2str(nsmooth),...
+                'Units','normalized','Position',[0.95 0.71 0.05 0.09],...
+                'Callback',@smooth_ft_edt);
+            uicontrol('Parent',GUI_FT_CON,'Style','text','String','smooth',...
+                'Units','normalized','Position',[0.95 0.81 0.05 0.09]);
+            colormap(axft,hot(200));
             colorbar('peer',axft,'Position',[0.9625 0.05 0.025 0.4]);
-            ifaxft=1;
+            ifaxft = 1;
         else
-            set(GUI_FT_CON,'CurrentAxes',axft);
-            pcolor(LAN{ncd}.freq.time(serietime), ... time
-                LAN{ncd}.freq.freq, ...
-                double(squeeze(dataft(:,serietime))));
-            shading flat, %colormap(hot(50)),
-            caxis(axft, caxis_ft) ;
-            colorbar('peer',axft,'Position',[0.9625 0.05 0.025 0.4]);
+            cla(axft);
         end
-        
-        
+        % The axes belongs to the FT figure, even if another GUI has focus.
+        pcolor(axft,LAN{ncd}.freq.time(serietime),LAN{ncd}.freq.freq,...
+            double(squeeze(dataft(:,serietime))));
+        shading(axft,'interp');
+        xlabel(axft,'Time(Second)');
+        ylabel(axft,'Frequency(Hz)');
+        caxis(axft,caxis_ft);
 
     end
 
@@ -1473,10 +1633,11 @@ end
 %  Hilbert plot 
 %-------------------
     function HIL_plot(b,bb,bbb)
-        if b==1
-            ifdatahil = true;
+        if isequal(b,1)
+            ifdatahil = logical(ifdatahil) && isequal(hilLastTrial,cnt) && ...
+                        isequal(hilLastCond,ncd);
         else
-           ifdatahil = false; 
+            ifdatahil = false;
         end
         
         clear bb bbb
@@ -1489,15 +1650,13 @@ end
                 %[n LAN{ncd}.tag] = getntag(LAN{ncd}.tag,label);
                 nM = getncha(LAN{ncd}.chanlocs,M);     
           end
-          % nM= label2idx_elec(LAN{ncd}.chanlocs,M);
-        
-        
-        
-        
-        
-        
+          % The marked-channel selection can change within the same trial.
+          if ifdatahil && ~isequal(hilLastChannels,nM)
+              ifdatahil = false;
+          end
         
         if ~ifdatahil
+            datahilsmooth = cell(1,size(cfghilbert,1));
             paso = (LAN{ncd}.data{cnt}(nM,:))';
             for nh =  1:size(cfghilbert,1)
                  sign = ones(size(paso));
@@ -1526,6 +1685,9 @@ end
                end
             end
            ifdatahil = true;
+           hilLastTrial = cnt;
+           hilLastCond = ncd;
+           hilLastChannels = nM;
         end
          rz=1;
           if ifcon
@@ -1540,70 +1702,39 @@ end
             ltime =linspace(LAN{ncd}.time(cnt,1),LAN{ncd}.time(cnt,2), LAN{ncd}.pnts(cnt));    
            end
        
-        if ~ifaxhil % crear eje
+        if ~ifaxhil || ~ishghandle(axhil)
             axhil = axes('Parent',GUI_HIL_plot,...
-                'Position',[0.05 0.1 0.9 0.85]...
-                );
-            set(GUI_HIL_plot,'CurrentAxes',axhil)
-            for nh =  1:size(cfghilbert,1)
-                Rec = 0; % rectificacion para el grafico
-                for dm = 1:size(datahil{nh},2) % por los electrodos marcados
-            plot(ltime, ... time
-                   real(datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz),dm))+Rec, 'b'); hold on;
-            plot(ltime, ... time
-                   abs(datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz),dm))+Rec, 'k')
-            plot(ltime, ... time
-                   -abs(datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz),dm))+Rec, 'k')
-            if Hil_span>1
-                plot(ltime, ... time
-                 ...  smooth((datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz),dm)).*conj(datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz),dm)),Hil_span(nh))+Rec, 'r','LineWidth',2);   
-                 datahilsmooth{nh}(ceil(ini_p*rz):ceil(fin_p*rz),dm)+Rec, 'r','LineWidth',2);   
-     
-            end
-            if size(datahil{nh},2) ==1
-            plot(ltime,   mean(abs(datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz),dm)))*(angle(datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz),dm))/pi) - 3*mean(abs(datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz)))) ,'red'  ); 
-            end
-                
-                Rec = Rec -6; %2*max(abs(datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz))));
-                end
-            
-            hold off   
-            ylabel('uV'),xlabel('Time(Second)')
-            %shading interp, colormap(hot(200)), caxis(axft, caxis_ft)
-            end
-            set(axhil,'ylim',[Rec+2 4]);
-            title(M);
-            ifaxhil=1;
+                'Position',[0.05 0.1 0.9 0.85]);
+            ifaxhil = 1;
         else
-           set(GUI_HIL_plot,'CurrentAxes',axhil); 
-              for nh =  1:size(cfghilbert,1)
-                Rec = 0; % rectificacion para el grafico
-                for dm = 1:size(datahil{nh},2) % por los electrodos marcados
-            plot(ltime, ... time
-                   real(datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz),dm))+Rec, 'b'); hold on;
-            plot(ltime, ... time
-                   abs(datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz),dm))+Rec, 'k')
-            plot(ltime, ... time
-                   -abs(datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz),dm))+Rec, 'k')
-            if Hil_span>1   
-            plot(ltime, ... time
-               datahilsmooth{nh}(ceil(ini_p*rz):ceil(fin_p*rz),dm)+Rec, 'r','LineWidth',2);   ...%smooth((datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz),dm)).*conj(datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz),dm)),Hil_span(nh))+Rec, 'r','LineWidth',2);   
-               % smooth(abs(datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz),dm)),Hil_span(nh))+Rec, 'r','LineWidth',2);   
-     
-            end
-            if size(datahil{nh},2) ==1
-            plot(ltime,   mean(abs(datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz),dm)))*(angle(datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz),dm))/pi) - 3*mean(abs(datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz)))) ,'red'  ); 
-            end
-                
-                Rec = Rec -6;%2*max(abs(datahil{nh}(ceil(ini_p*rz):ceil(fin_p*rz))));
-                end
-            
-            hold off   
-               end
-            set(axhil,'ylim',[Rec+2 4]); 
+            cla(axhil);
         end
-        
-        
+        hold(axhil,'on');
+        Rec = 0;
+        for nh = 1:size(cfghilbert,1)
+            Rec = 0; % Original per-band offset convention
+            for dm = 1:size(datahil{nh},2)
+                idx = ceil(ini_p*rz):ceil(fin_p*rz);
+                yy = datahil{nh}(idx,dm);
+                plot(axhil,ltime,real(yy)+Rec,'b');
+                plot(axhil,ltime, abs(yy)+Rec,'k');
+                plot(axhil,ltime,-abs(yy)+Rec,'k');
+                if Hil_span(nh)>1 && numel(datahilsmooth)>=nh && ...
+                        ~isempty(datahilsmooth{nh})
+                    plot(axhil,ltime,datahilsmooth{nh}(idx,dm)+Rec,'r','LineWidth',2);
+                end
+                if size(datahil{nh},2)==1
+                    phaseTrace = mean(abs(yy))*(angle(yy)/pi) - 3*mean(abs(yy));
+                    plot(axhil,ltime,phaseTrace,'red');
+                end
+                Rec = Rec - 6;
+            end
+        end
+        hold(axhil,'off');
+        ylabel(axhil,'uV');
+        xlabel(axhil,'Time(Second)');
+        ylim(axhil,[Rec+2 4]);
+        title(axhil,M);
 
     end
 
@@ -1621,6 +1752,8 @@ end
                 seq = seq( seq>0 & seq<=LAN{ncd}.pnts(1) );
                 LAN{ncd}.selected{1}(seq) = false;
             end
+            ifdataft = false; ifdatahil = false;
+            EEGplot(cnt);
         else
             disp('For unsegmented signals only');
         end
@@ -1650,11 +1783,16 @@ end
             dtime = cat(1,0,cumsum(dtime(1:end)));
           end
        
-            try delete(axrt); end
-            axrt = axes('Parent',guirt,...
-                'Position',[0.05 0.1 0.9 0.85]...
-                );
-            set(guirt,'CurrentAxes',axrt)
+            if isempty(axrt) || ~ishghandle(axrt)
+                axrt = axes('Parent',guirt,...
+                    'Position',[0.05 0.1 0.9 0.85]);
+            else
+                cla(axrt);
+            end
+            % Remove only RT event markers; retain all EEG traces.
+            if ifax && ishghandle(ax)
+                delete(findall(ax,'Tag','LAN_RTMarker'));
+            end
             
             if ifcon % indice de enventos a plotear
                ind =  (LAN{ncd}.RT.latency>=1000*min(ltime))&(LAN{ncd}.RT.latency<=1000*max(ltime));
@@ -1712,13 +1850,13 @@ end
                         'buttondownfcn', @event_green)
                          if ifax
                          line([xxt xxt],[ get(ax,'ylim') ],...
-                        'Parent',ax,'Color',[0.6 0.6 0.6]) ;   
+                        'Parent',ax,'Color',[0.6 0.6 0.6],'Tag','LAN_RTMarker') ;
                          end
                         
                     if isfield(LAN{ncd}.RT,'resp') && LAN{ncd}.RT.resp(nrt)~=-99
                          if LAN{ncd}.RT.good(nrt), color_tc = 'red'; else  color_tc = [0.5 0.5 0.5]; end    
                          text( (LAN{ncd}.RT.latency(nrt)+LAN{ncd}.RT.rt(nrt))/1000,yye,num2str(LAN{ncd}.RT.est(nrt)),...
-                        'Parent',axrt,'Color',color_tc','FontSize',12, 'userdata',nrt, ...
+                        'Parent',axrt,'Color',color_tc,'FontSize',12, 'userdata',nrt, ...
                         'buttondownfcn',@event_red)                    
                     end
                     end
@@ -1913,7 +2051,7 @@ end
     function C_selected(source,eventdata,handles)
     d = get(source,'CurrentPoint');
     d = fix(d(1));
-    if d<0; d=1;end 
+    d = min(max(d,1),numel(LAN{ncd}.selected{cnt}));
     
     if numel(selectP)~=1
        selectP = d;
@@ -1928,8 +2066,8 @@ end
        
        disp(['select points = ' num2str(selectP)])
        selectP = [];
-       ifax2 = false;
-       try delete(ax2); end
+       ifdataft = false;
+       ifdatahil = false;
        EEGplot(cnt)
     end
     
@@ -2150,12 +2288,28 @@ function condicion_menos(source,eventdata,handles)
     end
 end
 function camcond(ncd)
+% A segmented bar axes and a continuous-channel information panel are
+% different graphics types. Rebuild this one figure only when switching type.
+newContinuous = LAN{ncd}.trials == 1;
+if ~isempty(ifcon) && (logical(ifcon) ~= newContinuous)
+    if ishghandle(EEG), close(EEG); end
+    if ishghandle(ELECTRODE), delete(ELECTRODE); end
+    ELECTRODE = -1;
+    ifbarax = 0;
+    barax = [];
+    channelTextHandles = {};
+    GUIcb = {};
+end
 set(numeroC,'String', ncd );
 set(nombreC,'String', LAN{ncd}.cond );
 set(nombreG,'String', LAN{ncd}.group );
 set(nombreS,'String', LAN{ncd}.name );
 
 cnt=1;
+if ~isempty(view_chan) && any(view_chan>LAN{ncd}.nbchan)
+    view_chan = 1:LAN{ncd}.nbchan;
+    if ishghandle(EEG), close(EEG); end
+end
 EEGplot(cnt)
     if ishandle(ELECTRODE) 
       if strcmp( 'on',get(ELECTRODE,'Visible'))
@@ -2250,14 +2404,22 @@ else
     stre = eval([ '[' stre ']' ]);
     %LAN{ncd} = electrode_lan(LAN{ncd},stre);
     LAN = electrode_lan(LAN,stre);
+    ifdatahil = false; ifdataft = false;
+    view_chan = 1:LAN{ncd}.nbchan;
     set(dele,'String','OK')
 end
-    if ishandle(EEG)
-        close(EEG)
-    end
+    if ishghandle(EEG), close(EEG); end
+    if ishghandle(ELECTRODE), delete(ELECTRODE); end
+    ELECTRODE = -1;
+    ifbarax = 0;
+    barax = [];
+    channelTextHandles = {};
+    GUIcb = {};
     r_elec=cell(1,length(LAN));
         for ie = 1:length(r_elec)
-            r_elec{ie} = zeros(LAN{ie}.nbchan,LAN{ie}.trials);
+            if ~isempty(LAN{ie})
+                r_elec{ie} = zeros(LAN{ie}.nbchan,LAN{ie}.trials);
+            end
         end
     EEGplot(cnt);
 end
@@ -2272,6 +2434,7 @@ if strcmp(stre,'OK')
 else
     stre = eval([ '[' stre ']' ]);
     LAN{ncd} = vol_thr_lan(LAN{ncd},stre);
+        ifdatahil = false; ifdataft = false;
     set(vlt,'String','OK')
 end
     EEGplot(cnt);
@@ -2303,6 +2466,7 @@ else
     cfg=[]; cfg=[]; cfg.type=stre;
     %cfg.bad_elec=stre; cfg.bad_trial=1:LAN{ncd}.trials;
     LAN{ncd} = lan_interp(LAN{ncd},cfg);
+        ifdatahil = false; ifdataft = false;
     set(chint,'String','OK')
      end
 end
@@ -2319,6 +2483,7 @@ end
 function interpolbad(source,eventdata,handles) 
     cfg=[]; cfg.type='bad';
     LAN{ncd} = lan_interp(LAN{ncd},cfg);
+    ifdatahil = false; ifdataft = false;
     
     EEGplot(cnt);
     if ishandle(ELECTRODE) 
@@ -2466,6 +2631,7 @@ end
         val = get(b,'Value');
         str = get(b,'String');
         nor_ft = str{val};
+        if ifGUI_FT_CON && ishghandle(GUI_FT_CON), FT_CON(0,cnt); end
     end
 %-----------------
 %  smooth_ft_edt
@@ -2473,6 +2639,7 @@ end
     function smooth_ft_edt(b,bb,bbb)    
         str = get(b,'String');
         nsmooth = eval([  '['  str  ']']);
+        if ifGUI_FT_CON && ishghandle(GUI_FT_CON), FT_CON(0,cnt); end
     end
 %--
 %-------------------
@@ -2553,8 +2720,15 @@ function close_button_Callback(source,eventdata,handles)
 
 end
     function close_EEG(source,eventdata,handles)
-        pc=get(EEG,'Position'); %close(EEG) ;
-        delete(EEG)
+        if ishghandle(EEG)
+            pc = get(EEG,'Position');
+            delete(EEG);
+        end
+        ifax = 0;
+        ifax2 = 0;
+        ax = [];
+        ax2 = [];
+        elecbot = [];
     end
 %-event
                 
@@ -2576,7 +2750,7 @@ end
 %--------------
     function COMP_EEG
         warning off
-       if ishandle(EEG)
+       if ishghandle(EEG)
                 try  
                 pc=get(EEG,'Position'); %close(EEG) ; 
                 set(EEG,'Visible','on');
@@ -2587,8 +2761,10 @@ end
        else
                %Pe =[1   fix(1.3*scrsz(4)/6)       fix(scrsz(3)/2) fix(3*scrsz(4)/6) ];
                 EEG = figure('Visible','on','Position',pc,...
-               'Name','EEG plot','NumberTitle','off','MenuBar', 'none');
+               'Name','EEG plot','NumberTitle','off','MenuBar', 'none',...
+               'CloseRequestFcn',@close_EEG);
                ifax=0;
+               ifax2=0;
        end
        %set(EEG,'CloseRequestFcn',@closeEEG)
        warning on
@@ -2615,6 +2791,9 @@ function COMP_ELECTRODE
         ELECTRODE = figure('Visible','on','Position',pce,...
             'Name','Channels','NumberTitle','off','MenuBar', 'none','CloseRequestFcn', @close_BB);
         ifbarax=0;
+        barax=[];
+        channelTextHandles={};
+        GUIcb={};
     end
     %set(EEG,'CloseRequestFcn',@closeEEG)
     warning on
@@ -2622,7 +2801,7 @@ end
   %---------------
     function COMP_FT_CON
   
-    if ifGUI_FT_CON
+    if ifGUI_FT_CON && ishghandle(GUI_FT_CON)
        set(GUI_FT_CON,'Visible','on');
     else
        GUI_FT_CON = figure('Visible','on','Position',pc,...
@@ -2631,16 +2810,20 @@ end
        ifaxft=0;
        ifdataft=0;
        ifGUI_FT_CON = 1;
+       ftLastTrial = []; ftLastCond = [];
     end
     end
     function close_FT_CON(b, bb, bbb)
-        delete(GUI_FT_CON)
+        if ishghandle(GUI_FT_CON), delete(GUI_FT_CON); end
         ifGUI_FT_CON = 0;
+        ifaxft = 0;
+        axft = [];
+        ifdataft = 0;
     end
   %--------------
   function COMP_guirt
   
-    if ifguirt
+    if ifguirt && ishghandle(guirt)
        set(guirt,'Visible','on');
     else
        lg(1) = pc(1); lg(2) = pc(2)+pc(4); lg(3) = pc(3); lg(4) = 30;    
@@ -2653,13 +2836,17 @@ end
     end
     end
     function closeguirt(b, bb, bbb)
-        delete(guirt)
-        ifguirt =  0;
+        if ishghandle(guirt), delete(guirt); end
+        ifguirt = 0;
+        axrt = [];
+        if ifax && ishghandle(ax)
+            delete(findall(ax,'Tag','LAN_RTMarker'));
+        end
     end
   %---------------
     function COMP_HIL_plot
   
-    if ifGUI_HIL_plot
+    if ifGUI_HIL_plot && ishghandle(GUI_HIL_plot)
        set(GUI_HIL_plot,'Visible','on');
     else
        
@@ -2669,11 +2856,15 @@ end
        ifaxhil=0;
        ifdatahil=0;
        ifGUI_HIL_plot = 1;
+       hilLastTrial = []; hilLastCond = []; hilLastChannels = [];
     end
     end
     function close_HIL_plot(b, bb, bbb)
-        delete(GUI_HIL_plot)
-        ifGUI_HIL_plot =  0;
+        if ishghandle(GUI_HIL_plot), delete(GUI_HIL_plot); end
+        ifGUI_HIL_plot = 0;
+        ifaxhil = 0;
+        axhil = [];
+        ifdatahil = 0;
     end
 %----------------
 
