@@ -27,7 +27,7 @@
     
        if nargin==0
            n=0;
-            for  OP = {'E','S','C','X','Y','Jet'};
+            for  OP = {'E','S','C','X','Y','Jet','i'};
              uicontrol('Style','pushbutton','Position',[0,n,20,20],'String',OP{1},'Callback',{@editF})
              n=n+20;
             end
@@ -99,7 +99,22 @@
                R = gui_q({'Lim Color'},{ num2str(limC)});
                set(gca,'Clim',eval([ '[' R{1} ']' ]));
 
-               delete(findall(gcf, 'Type', 'uicontrol'))
+                fig = gcf;
+                ax = gca;
+                
+                % Eliminar controles de la GUI
+                delete(findall(fig, 'Type', 'uicontrol'));
+                
+                % Eliminar leyenda de los contornos
+                delete(findall(fig, 'Type', 'legend'));
+                
+                % Ocultar ejes, manteniendo el mapa de color
+                axis(ax, 'off');
+                
+                set(fig, 'Color', 'white');
+
+
+
                 R = gui_q({'File name'},{ '_.png'});
                 axis off;
                 set(gca, 'Position', [0 0 1 1]); % Ajustar el área del gráfico
