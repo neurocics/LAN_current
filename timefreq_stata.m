@@ -27,7 +27,11 @@ function GLAN = timefreq_stata(GLAN,cfg)
 %     stata,'lme'
 %
 %   glm_matrix = [ ]
-%  RegressorOI
+%  RegressorOI = index of the predictor in cfg.glm_matrix.
+%                For 'lme', the LAST column is the random-intercept
+%                grouping variable and is not a fixed-effect predictor.
+%                The intercept added by fitlme is indexed internally,
+%                so RegressorOI=1 selects glm_matrix(:,1), not intercept.
 % -------------------------------------------------
 %  stata =   'nonparametric' || 1
 %             
@@ -154,6 +158,23 @@ end
 
 if strcmp(stata,'glm') || strcmp(stata,'robust') || strcmp(stata,'lme')
     RegressorOI = getcfg(cfg, 'RegressorOI',1);
+
+    % In lan_model_stat('lme'), the formula starts with 'Y ~ 1'.
+    % Its first coefficient is therefore the FIXED intercept, whereas
+    % cfg.glm_matrix columns start with the actual predictors.
+    % The final glm_matrix column is reserved for the random-intercept group.
+    if strcmp(stata,'lme')
+        nFixed = size(glm_matrix,2) - 1;
+        if ~isscalar(RegressorOI) || ~isnumeric(RegressorOI) || ...
+                ~isfinite(RegressorOI) || RegressorOI ~= fix(RegressorOI) || ...
+                RegressorOI < 1 || RegressorOI > nFixed
+            error('timefreq_stata:InvalidRegressorOI', ...
+                ['For lme, cfg.RegressorOI must index a FIXED-effect ' ...
+                 'column of cfg.glm_matrix (1 to %d); the last ' ...
+                 'column is the subject/group ID.'], nFixed);
+        end
+        indexROF_lme = RegressorOI + 1;
+    end
 end
 
 % if strcmp(stata,'glm') && isempty(glm_matrix)
@@ -374,6 +395,18 @@ end
 %--
 GLAN.timefreq.comp{nbcomp}(2,:)=group;
 %--
+
+% -------------------------------------------------------------------------
+% Subject-level permutation models stored inside each LAN file
+%
+% v_freq_permuto{g,c} is kept with dimensions:
+%   frequency x electrode x time x subject x permutation
+%
+% This is independent of the older cfg.permute_name / PER mechanism.
+% -------------------------------------------------------------------------
+v_freq_permuto = cell(max(abs(group)), max(cond));
+has_model_permuto = cell(max(abs(group)), max(cond));
+nperm_model_permuto = nan(max(abs(group)), max(cond));
 
     try
     time = cfg.time;
@@ -694,11 +727,19 @@ end
                 case 't'
                 
                     paso =     LAN.freq.model.t{c}(fr,:,:); 
-                    if isnumeric(time)&&(numel(time)==2)
-                            pasoi = true(1,size(paso,3)); % time
-                            pasoi((LAN.freq.time<min(time))|(LAN.freq.time>max(time))) = false;
+                        if isnumeric(time) && numel(time)==2
+                        
+                            if isfield(LAN.freq.model,'time') && ~isempty(LAN.freq.model.time)
+                                time_model = LAN.freq.model.time;
+                            else
+                                time_model = LAN.freq.time;
+                            end
+                        
+                            pasoi = (time_model >= min(time)) & ...
+                                    (time_model <= max(time));
+                        
                             paso = paso(:,:,pasoi);
-                    end
+                        end
                     v_freq{g,c}(:,:,:,s) = paso;
                 
                     % permute file 
@@ -713,16 +754,75 @@ end
                         np_freq{g,c,npn-1}(:,:,:,s) = paso;
                         end
                      end
+
+                    % -----------------------------------------------------
+                    % Permutation models stored in the SAME LAN structure
+                    % LAN.freq.model_permuto(np).t{c}
+                    % Final order:
+                    % freq x electrode x time x subject x permutation
+                    % -----------------------------------------------------
+                    has_permuto_this_subject = isfield(LAN.freq,'model_permuto') && ...
+                                               ~isempty(LAN.freq.model_permuto);
+
+                    if isempty(has_model_permuto{g,c})
+                        has_model_permuto{g,c} = has_permuto_this_subject;
+                        if has_permuto_this_subject
+                            nperm_model_permuto(g,c) = numel(LAN.freq.model_permuto);
+                        end
+                    else
+                        if has_model_permuto{g,c} ~= has_permuto_this_subject
+                            error(['Inconsistent model_permuto availability across subjects ' ...
+                                   'for group ' num2str(g) ', condition/regressor ' num2str(c)]);
+                        end
+                        if has_permuto_this_subject && ...
+                           nperm_model_permuto(g,c) ~= numel(LAN.freq.model_permuto)
+                            error(['Different number of model_permuto realizations across subjects ' ...
+                                   'for group ' num2str(g) ', condition/regressor ' num2str(c)]);
+                        end
+                    end
+
+                    if has_permuto_this_subject
+                        for nmp = 1:numel(LAN.freq.model_permuto)
+                            paso_permuto = LAN.freq.model_permuto(nmp).t{c}(fr,:,:);
+
+                            if isnumeric(time) && (numel(time)==2)
+                                if isfield(LAN.freq.model_permuto(nmp),'time') && ...
+                                   ~isempty(LAN.freq.model_permuto(nmp).time)
+                                    time_permuto = LAN.freq.model_permuto(nmp).time;
+                                elseif isfield(LAN.freq.model,'time') && ...
+                                       ~isempty(LAN.freq.model.time)
+                                    time_permuto = LAN.freq.model.time;
+                                else
+                                    time_permuto = LAN.freq.time;
+                                end
+
+                                pasoi_permuto = (time_permuto >= min(time)) & ...
+                                                (time_permuto <= max(time));
+                                paso_permuto = paso_permuto(:,:,pasoi_permuto);
+                            end
+
+                            v_freq_permuto{g,c}(:,:,:,s,nmp) = paso_permuto;
+                        end
+                    end
                 
                 
                 
                 case 'b'
-                paso =     LAN.freq.model.b{c}(fr,:,:); 
-                    if isnumeric(time)&&(numel(time)==2)
-                            pasoi = true(1,size(paso,3)); % time
-                            pasoi((LAN.freq.time<min(time))&(LAN.freq.time>max(time))) = false;
+                        paso = LAN.freq.model.b{c}(fr,:,:);
+                        
+                        if isnumeric(time) && numel(time)==2
+                        
+                            if isfield(LAN.freq.model,'time') && ~isempty(LAN.freq.model.time)
+                                time_model = LAN.freq.model.time;
+                            else
+                                time_model = LAN.freq.time;
+                            end
+                        
+                            pasoi = (time_model >= min(time)) & ...
+                                    (time_model <= max(time));
+                        
                             paso = paso(:,:,pasoi);
-                    end
+                        end
                 v_freq{g,c}(:,:,:,s) = paso;                 
                     % permute file 
                      if numel(permute_name)>1
@@ -736,6 +836,68 @@ end
                         np_freq{g,c,npn-1}(:,:,:,s) = paso;
                         end
                      end
+
+                    % -----------------------------------------------------
+                    % Permutation models stored in the SAME LAN structure
+                    % LAN.freq.model_permuto(np).b{c}
+                    % Final order:
+                    % freq x electrode x time x subject x permutation
+                    % -----------------------------------------------------
+
+                    has_permuto_this_subject = isfield(LAN.freq,'model_permuto') && ...
+                                               ~isempty(LAN.freq.model_permuto);
+
+                    if isempty(has_model_permuto{g,c})
+                        has_model_permuto{g,c} = has_permuto_this_subject;
+                        if has_permuto_this_subject
+                            nperm_model_permuto(g,c) = numel(LAN.freq.model_permuto);
+                        end
+                    else
+                        if has_model_permuto{g,c} ~= has_permuto_this_subject
+                            error(['Inconsistent model_permuto availability across subjects ' ...
+                                   'for group ' num2str(g) ', condition/regressor ' num2str(c)]);
+                        end
+                        if has_permuto_this_subject && ...
+                           nperm_model_permuto(g,c) ~= numel(LAN.freq.model_permuto)
+                            error(['Different number of model_permuto realizations across subjects ' ...
+                                   'for group ' num2str(g) ', condition/regressor ' num2str(c)]);
+                        end
+                    end
+
+                    if has_permuto_this_subject
+                        for nmp = 1:numel(LAN.freq.model_permuto)
+                            paso_permuto = LAN.freq.model_permuto(nmp).b{c}(fr,:,:);
+
+                            if isnumeric(time) && (numel(time)==2)
+                                if isfield(LAN.freq.model_permuto(nmp),'time') && ...
+                                   ~isempty(LAN.freq.model_permuto(nmp).time)
+                                    time_permuto = LAN.freq.model_permuto(nmp).time;
+                                elseif isfield(LAN.freq.model,'time') && ...
+                                       ~isempty(LAN.freq.model.time)
+                                    time_permuto = LAN.freq.model.time;
+                                else
+                                    time_permuto = LAN.freq.time;
+                                end
+
+                                pasoi_permuto = (time_permuto >= min(time)) & ...
+                                                (time_permuto <= max(time));
+                                paso_permuto = paso_permuto(:,:,pasoi_permuto);
+                            end
+        
+                            if s == 1 && nmp == 1
+        
+                                [nf, ne, nt] = size(paso_permuto);
+                                ns = length(sujetos{g});
+                                np = numel(LAN.freq.model_permuto);
+                            
+                                v_freq_permuto{g,c} = nan( ...
+                                    nf, ne, nt, ns, np, ...
+                                    'like', paso_permuto);
+                            
+                            end
+                            v_freq_permuto{g,c}(:,:,:,s,nmp) = paso_permuto;
+                        end
+                    end
                 
                 
             end
@@ -839,6 +1001,23 @@ if ifsmooth==1
           end
       end 
       v_freq{abs(group(i)),cond(i)}=paso;
+
+      % Apply the same smoothing to subject-level permutation maps.
+      % Dimensions: frequency x electrode x time x subject x permutation
+      if ~isempty(v_freq_permuto{abs(group(i)),cond(i)})
+          paso_permuto = v_freq_permuto{abs(group(i)),cond(i)};
+          [~, de_permuto, ~, ds_permuto, dp_permuto] = size(paso_permuto);
+          for ipermuto = 1:dp_permuto
+              for ie_permuto = 1:de_permuto
+                  for is_permuto = 1:ds_permuto
+                      paso_permuto(:,ie_permuto,:,is_permuto,ipermuto) = ...
+                          lan_smooth(squeeze(paso_permuto(:,ie_permuto,:,is_permuto,ipermuto)));
+                  end
+              end
+          end
+          v_freq_permuto{abs(group(i)),cond(i)} = paso_permuto;
+          clear paso_permuto
+      end
    end
 end
 
@@ -883,9 +1062,16 @@ if ifstata && ~mdif && ~no1_st
                 else
                 [r_pval r_stat] = lan_model_stat(cat(2,a(i),Regressors{:}), cfgM);
                 end
-                pval{group(i),cond(i)}=r_pval{RegressorOI};
-                stat{group(i),cond(i)}=r_stat.t{RegressorOI};
-                betas{group(i),cond(i)}=r_stat.b{RegressorOI};
+                % LME: skip the automatic fixed intercept at index 1.
+                % GLM/robust: preserve their original index convention.
+                if strcmp(stata,'lme')
+                    indexROF = indexROF_lme;
+                else
+                    indexROF = RegressorOI;
+                end
+                pval{group(i),cond(i)}=r_pval{indexROF};
+                stat{group(i),cond(i)}=r_stat.t{indexROF};
+                betas{group(i),cond(i)}=r_stat.b{indexROF};
             end
             
             % for MCP calculatation will be use A and not  v_freq
@@ -1030,6 +1216,17 @@ end
                   if  ~no1_st
                   GLAN.timefreq.subdata{g,c} = v_freq{g,c};
                   GLAN.timefreq.data{g,c} = mean(v_freq{g,c},4);
+
+                  % Save subject-level permutation maps, when available.
+                  % Dimensions are strictly:
+                  % frequency x electrode x time x subject x permutation
+                  if ~isempty(has_model_permuto{g,c}) && has_model_permuto{g,c}
+                      GLAN.timefreq.subdata_permuto{g,c} = v_freq_permuto{g,c};
+                      GLAN.timefreq.subdata_permuto_dimorder = ...
+                          {'frequency','electrode','time','subject','permutation'};
+                      GLAN.timefreq.subdata_permuto_n{g,c} = ...
+                          size(v_freq_permuto{g,c},5);
+                  end
                   else
                   v_freq{g,c}=GLAN.timefreq.subdata{g,c};
    
@@ -1037,7 +1234,7 @@ end
               end
               end
 
- clear v_freq;
+ clear v_freq v_freq_permuto;
  
  % check redundance !!
 if ifstata  && ~no1_st && strcmp(stata,'nonparametric')
